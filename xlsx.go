@@ -201,7 +201,83 @@ func (s *Sheet) SaveToFile(filename string) error {
 // Save the XLSX file to the given writer
 func (s *Sheet) SaveToWriter(w io.Writer) error {
 
-	z := zip.NewWriter(w)
+	sw := NewSheetWriter(w)
+	z := sw.zipWriter
+
+	err := sw.WriteHeader(s)
+	if err != nil {
+		return err
+	}
+
+	f, err := z.Create("xl/worksheets/sheet1.xml")
+
+	sheet := struct {
+		Cols  []Column
+		Rows  []string
+		Start string
+		End   string
+	}{
+		Cols: s.columns,
+		Rows: make([]string, len(s.rows)),
+	}
+
+	sheet.Start = "A1"
+	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
+
+	for i, r := range s.rows {
+		rb := &bytes.Buffer{}
+		for j, c := range r.Cells {
+
+			cell := struct {
+				CellIndex string
+				Value     string
+			}{
+				CellIndex: CellIndex(uint64(j), uint64(i)),
+				Value:     c.Value,
+			}
+
+			switch c.Type {
+			case CellTypeString:
+				err = TemplateCellString.Execute(rb, cell)
+			case CellTypeNumber:
+				err = TemplateCellNumber.Execute(rb, cell)
+			case CellTypeDatetime:
+				err = TemplateCellDateTime.Execute(rb, cell)
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+		sheet.Rows[i] = rb.String()
+	}
+
+	err = TemplateSheetStart.Execute(f, sheet)
+	if err != nil {
+		return err
+	}
+
+	err = TemplateSheetRows.Execute(f, sheet)
+	if err != nil {
+		return err
+	}
+
+	err = TemplateSheetEnd.Execute(f, sheet)
+	if err != nil {
+		return err
+	}
+
+	err = sw.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (sw *SheetWriter) WriteHeader(s *Sheet) error {
+
+	z := sw.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
 	err = TemplateContentTypes.Execute(f, nil)
@@ -251,58 +327,17 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	f, err = z.Create("xl/worksheets/sheet1.xml")
-
-	sheet := struct {
-		Cols  []Column
-		Rows  []string
-		Start string
-		End   string
-	}{
-		Cols: s.columns,
-		Rows: make([]string, len(s.rows)),
-	}
-
-	sheet.Start = "A1"
-	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
-
-	for i, r := range s.rows {
-		rb := &bytes.Buffer{}
-		for j, c := range r.Cells {
-
-			cell := struct {
-				CellIndex string
-				Value     string
-			}{
-				CellIndex: CellIndex(uint64(j), uint64(i)),
-				Value:     c.Value,
-			}
-
-			switch c.Type {
-			case CellTypeString:
-				err = TemplateCellString.Execute(rb, cell)
-			case CellTypeNumber:
-				err = TemplateCellNumber.Execute(rb, cell)
-			case CellTypeDatetime:
-				err = TemplateCellDateTime.Execute(rb, cell)
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-		sheet.Rows[i] = rb.String()
-	}
-
-	err = TemplateSheet.Execute(f, sheet)
-	if err != nil {
-		return err
-	}
-
-	err = z.Close()
-	if err != nil {
-		return err
-	}
-
 	return nil
+}
+
+type SheetWriter struct {
+	zipWriter *zip.Writer
+}
+
+func NewSheetWriter(w io.Writer) *SheetWriter {
+	return &SheetWriter{zip.NewWriter(w)}
+}
+
+func (sw *SheetWriter) Close() error {
+	return sw.zipWriter.Close()
 }
