@@ -15,7 +15,9 @@ var (
 	TemplateWorkbookRelationships *template.Template
 	TemplateStyles                *template.Template
 	TemplateStringLookups         *template.Template
-	TemplateSheet                 *template.Template
+	TemplateSheetStart            *template.Template
+	TemplateSheetRows             *template.Template
+	TemplateSheetEnd              *template.Template
 	TemplateCellNumber            *template.Template
 	TemplateCellString            *template.Template
 	TemplateCellDateTime          *template.Template
@@ -44,7 +46,9 @@ func init() {
 	TemplateWorkbookRelationships = template.Must(template.New("templateWorkbookRelationships").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateWorkbookRelationships, "")))
 	TemplateStyles = template.Must(template.New("templateStyles").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStyles, "")))
 	TemplateStringLookups = template.Must(template.New("templateStringLookups").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStringLookups, "")))
-	TemplateSheet = template.Must(template.New("templateSheet").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheet, "")))
+	TemplateSheetStart = template.Must(template.New("templateSheetStart").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetStart, "")))
+	TemplateSheetRows = template.Must(template.New("templateSheetRows").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetRows, "")))
+	TemplateSheetEnd = template.Must(template.New("templateSheetEnd").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetEnd, "")))
 	TemplateCellNumber = template.Must(template.New("templateCellNumber").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellNumber, "")))
 	TemplateCellString = template.Must(template.New("templateCellString").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellString, "")))
 	TemplateCellDateTime = template.Must(template.New("templateCellDateTime").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellDateTime, "")))
@@ -144,7 +148,7 @@ const templateStringLookups = `<?xml version="1.0" encoding="UTF-8" standalone="
 {{range .}}<si><t>{{.}}</t></si>{{end}}
 </sst>`
 
-const templateSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
       <dimension ref="{{.Start}}:{{.End}}"/>
       <sheetViews>
@@ -156,9 +160,13 @@ const templateSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
           <col min="{{plus $i 1}}" max="{{plus $i 1}}" width="{{$e.Width}}" customWidth="1" style="1"/>
           {{end}}
         </cols>
-      <sheetData>
+      <sheetData>`
+
+const templateSheetRows = `
         {{range $i, $e := .Rows}}
-        <row r="{{plus $i 1}}">{{.}}</row>
+        <row r="{{plus $i 1}}">{{.}}</row>`
+
+const templateSheetEnd = `
         {{end}}
       </sheetData>
    </worksheet>`

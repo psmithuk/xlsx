@@ -252,7 +252,17 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		sheet.Rows[i] = rb.String()
 	}
 
-	err = TemplateSheet.Execute(f, sheet)
+	err = TemplateSheetStart.Execute(f, sheet)
+	if err != nil {
+		return err
+	}
+
+	err = TemplateSheetRows.Execute(f, sheet)
+	if err != nil {
+		return err
+	}
+
+	err = TemplateSheetEnd.Execute(f, sheet)
 	if err != nil {
 		return err
 	}
