@@ -210,13 +210,18 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 	for i, r := range rows {
 		rb := &bytes.Buffer{}
+
+        if sw.maxNCols < uint64(len(r.Cells)) {
+            sw.maxNCols = uint64(len(r.Cells))
+        }
+
 		for j, c := range r.Cells {
 
 			cell := struct {
 				CellIndex string
 				Value     string
 			}{
-				CellIndex: CellIndex(uint64(j), uint64(i)),
+				CellIndex: CellIndex(uint64(j), uint64(i) + sw.currentIndex),
 				Value:     c.Value,
 			}
 
@@ -236,10 +241,14 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 		sheet.Rows[i] = rb.String()
 	}
 
+    sw.currentIndex += uint64(len(rows))
+
 	err = TemplateSheetRows.Execute(sw.f, sheet)
 	if err != nil {
 		return err
 	}
+
+
 
 	return nil
 }
@@ -254,10 +263,12 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	sw := ww.NewSheetWriter()
+	sw := ww.NewSheetWriter("sheet1")
 
 	sw.Write(s)
 	sw.WriteRows(s.rows)
+	sw.WriteRows(s.rows)
+    sw.Close()
 
 	err = ww.Close()
 	if err != nil {
@@ -334,32 +345,37 @@ func (ww *WorkbookWriter) Close() error {
 	return ww.zipWriter.Close()
 }
 
-func (ww *WorkbookWriter) NewSheetWriter() *SheetWriter {
-	f, err := ww.zipWriter.Create("xl/worksheets/sheet1.xml")
-	return &SheetWriter{f, err}
+func (ww *WorkbookWriter) NewSheetWriter(name string) *SheetWriter {
+	f, err := ww.zipWriter.Create("xl/worksheets/" + name + ".xml")
+	return &SheetWriter{f, err, 0, 0}
 }
 
 type SheetWriter struct {
 	f   io.Writer
 	err error
+    currentIndex uint64
+    maxNCols uint64
 }
 
 func (sw *SheetWriter) Close() error {
-	err := TemplateSheetEnd.Execute(sw.f, nil)
+    sheet := struct {
+		Start string
+		End   string
+	}{
+        Start: "A1",
+        End: CellIndex(sw.maxNCols-1, sw.currentIndex-1),
+    }
+
+	err := TemplateSheetEnd.Execute(sw.f, sheet)
 	return err
 }
 
 func (sw *SheetWriter) Write(s *Sheet) error {
-	sheet := struct {
-		Cols  []Column
-		Start string
-		End   string
-	}{
+    sheet := struct {
+        Cols []Column
+    }{
 		Cols: s.columns,
-	}
-
-	sheet.Start = "A1"
-	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
+    }
 
 	err := TemplateSheetStart.Execute(sw.f, sheet)
 	return err
