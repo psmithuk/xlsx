@@ -198,33 +198,17 @@ func (s *Sheet) SaveToFile(filename string) error {
 	return err
 }
 
-// Save the XLSX file to the given writer
-func (s *Sheet) SaveToWriter(w io.Writer) error {
+func (sw *SheetWriter) WriteRows(rows []Row) error {
 
-	sw := NewSheetWriter(w)
-	z := sw.zipWriter
-
-	err := sw.WriteHeader(s)
-	if err != nil {
-		return err
-	}
-
-	f, err := z.Create("xl/worksheets/sheet1.xml")
+	var err error
 
 	sheet := struct {
-		Cols  []Column
-		Rows  []string
-		Start string
-		End   string
+		Rows []string
 	}{
-		Cols: s.columns,
-		Rows: make([]string, len(s.rows)),
+		Rows: make([]string, len(rows)),
 	}
 
-	sheet.Start = "A1"
-	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
-
-	for i, r := range s.rows {
+	for i, r := range rows {
 		rb := &bytes.Buffer{}
 		for j, c := range r.Cells {
 
@@ -252,22 +236,30 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		sheet.Rows[i] = rb.String()
 	}
 
-	err = TemplateSheetStart.Execute(f, sheet)
+	err = TemplateSheetRows.Execute(sw.f, sheet)
 	if err != nil {
 		return err
 	}
 
-	err = TemplateSheetRows.Execute(f, sheet)
+    return nil
+}
+
+// Save the XLSX file to the given writer
+func (s *Sheet) SaveToWriter(w io.Writer) error {
+
+	ww := NewWorkbookWriter(w)
+
+	err := ww.WriteHeader(s)
 	if err != nil {
 		return err
 	}
 
-	err = TemplateSheetEnd.Execute(f, sheet)
-	if err != nil {
-		return err
-	}
+    sw := ww.NewSheetWriter()
 
-	err = sw.Close()
+    sw.Write(s)
+	sw.WriteRows(s.rows)
+
+	err = ww.Close()
 	if err != nil {
 		return err
 	}
@@ -275,9 +267,9 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	return nil
 }
 
-func (sw *SheetWriter) WriteHeader(s *Sheet) error {
+func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 
-	z := sw.zipWriter
+	z := ww.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
 	err = TemplateContentTypes.Execute(f, nil)
@@ -330,14 +322,45 @@ func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 	return nil
 }
 
-type SheetWriter struct {
+type WorkbookWriter struct {
 	zipWriter *zip.Writer
 }
 
-func NewSheetWriter(w io.Writer) *SheetWriter {
-	return &SheetWriter{zip.NewWriter(w)}
+func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
+	return &WorkbookWriter{zip.NewWriter(w)}
+}
+
+func (ww *WorkbookWriter) Close() error {
+	return ww.zipWriter.Close()
+}
+
+func (ww *WorkbookWriter) NewSheetWriter() *SheetWriter {
+	f, err := ww.zipWriter.Create("xl/worksheets/sheet1.xml")
+    return &SheetWriter{f, err}
+}
+
+type SheetWriter struct {
+	f   io.Writer
+	err error
 }
 
 func (sw *SheetWriter) Close() error {
-	return sw.zipWriter.Close()
+    err := TemplateSheetEnd.Execute(sw.f, nil)
+    return err
+}
+
+func (sw *SheetWriter) Write(s *Sheet) error {
+    sheet := struct {
+		Cols  []Column
+		Start string
+		End   string
+	}{
+		Cols: s.columns,
+	}
+
+	sheet.Start = "A1"
+	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
+
+    err := TemplateSheetStart.Execute(sw.f, sheet)
+    return err
 }
