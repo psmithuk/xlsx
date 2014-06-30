@@ -96,6 +96,18 @@ func NewSheetWithColumns(c []Column) Sheet {
 	return s
 }
 
+type SheetWriter struct {
+	zipWriter *zip.Writer
+}
+
+func NewSheetWriter(w io.Writer) *SheetWriter {
+	return &SheetWriter{zip.NewWriter(w)}
+}
+
+func (sw *SheetWriter) Close() error {
+	return sw.zipWriter.Close()
+}
+
 // Create a new row with a length caculated by the sheets known column count
 func (s *Sheet) NewRow() Row {
 	c := make([]Cell, len(s.columns))
@@ -198,10 +210,9 @@ func (s *Sheet) SaveToFile(filename string) error {
 	return err
 }
 
-// Save the XLSX file to the given writer
-func (s *Sheet) SaveToWriter(w io.Writer) error {
+func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 
-	z := zip.NewWriter(w)
+	z := sw.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
 	err = TemplateContentTypes.Execute(f, nil)
@@ -251,7 +262,21 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	f, err = z.Create("xl/worksheets/sheet1.xml")
+	return nil
+}
+
+// Save the XLSX file to the given writer
+func (s *Sheet) SaveToWriter(w io.Writer) error {
+
+	sw := NewSheetWriter(w)
+	z := sw.zipWriter
+
+	err := sw.WriteHeader(s)
+	if err != nil {
+		return err
+	}
+
+	f, err := z.Create("xl/worksheets/sheet1.xml")
 
 	sheet := struct {
 		Cols  []Column
@@ -299,7 +324,7 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	err = z.Close()
+	err = sw.Close()
 	if err != nil {
 		return err
 	}
