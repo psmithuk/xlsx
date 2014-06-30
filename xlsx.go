@@ -241,7 +241,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 		return err
 	}
 
-    return nil
+	return nil
 }
 
 // Save the XLSX file to the given writer
@@ -254,9 +254,9 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-    sw := ww.NewSheetWriter()
+	sw := ww.NewSheetWriter()
 
-    sw.Write(s)
+	sw.Write(s)
 	sw.WriteRows(s.rows)
 
 	err = ww.Close()
@@ -336,7 +336,7 @@ func (ww *WorkbookWriter) Close() error {
 
 func (ww *WorkbookWriter) NewSheetWriter() *SheetWriter {
 	f, err := ww.zipWriter.Create("xl/worksheets/sheet1.xml")
-    return &SheetWriter{f, err}
+	return &SheetWriter{f, err}
 }
 
 type SheetWriter struct {
@@ -345,12 +345,12 @@ type SheetWriter struct {
 }
 
 func (sw *SheetWriter) Close() error {
-    err := TemplateSheetEnd.Execute(sw.f, nil)
-    return err
+	err := TemplateSheetEnd.Execute(sw.f, nil)
+	return err
 }
 
 func (sw *SheetWriter) Write(s *Sheet) error {
-    sheet := struct {
+	sheet := struct {
 		Cols  []Column
 		Start string
 		End   string
@@ -361,6 +361,6 @@ func (sw *SheetWriter) Write(s *Sheet) error {
 	sheet.Start = "A1"
 	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
 
-    err := TemplateSheetStart.Execute(sw.f, sheet)
-    return err
+	err := TemplateSheetStart.Execute(sw.f, sheet)
+	return err
 }
