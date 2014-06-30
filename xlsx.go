@@ -96,18 +96,6 @@ func NewSheetWithColumns(c []Column) Sheet {
 	return s
 }
 
-type SheetWriter struct {
-	zipWriter *zip.Writer
-}
-
-func NewSheetWriter(w io.Writer) *SheetWriter {
-	return &SheetWriter{zip.NewWriter(w)}
-}
-
-func (sw *SheetWriter) Close() error {
-	return sw.zipWriter.Close()
-}
-
 // Create a new row with a length caculated by the sheets known column count
 func (s *Sheet) NewRow() Row {
 	c := make([]Cell, len(s.columns))
@@ -210,61 +198,6 @@ func (s *Sheet) SaveToFile(filename string) error {
 	return err
 }
 
-func (sw *SheetWriter) WriteHeader(s *Sheet) error {
-
-	z := sw.zipWriter
-
-	f, err := z.Create("[Content_Types].xml")
-	err = TemplateContentTypes.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("docProps/core.xml")
-	err = TemplateCore.Execute(f, s.DocumentInfo)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("_rels/.rels")
-	err = TemplateRelationships.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("xl/_rels/workbook.xml.rels")
-	err = TemplateWorkbookRelationships.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("xl/styles.xml")
-	err = TemplateStyles.Execute(f, nil)
-	if err != nil {
-		return err
-	}
-
-	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s.SharedStrings())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Save the XLSX file to the given writer
 func (s *Sheet) SaveToWriter(w io.Writer) error {
 
@@ -330,4 +263,71 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	}
 
 	return nil
+}
+
+func (sw *SheetWriter) WriteHeader(s *Sheet) error {
+
+	z := sw.zipWriter
+
+	f, err := z.Create("[Content_Types].xml")
+	err = TemplateContentTypes.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("docProps/app.xml")
+	err = TemplateApp.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("docProps/core.xml")
+	err = TemplateCore.Execute(f, s.DocumentInfo)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("_rels/.rels")
+	err = TemplateRelationships.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("xl/workbook.xml")
+	err = TemplateWorkbook.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("xl/_rels/workbook.xml.rels")
+	err = TemplateWorkbookRelationships.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("xl/styles.xml")
+	err = TemplateStyles.Execute(f, nil)
+	if err != nil {
+		return err
+	}
+
+	f, err = z.Create("xl/sharedStrings.xml")
+	err = TemplateStringLookups.Execute(f, s.SharedStrings())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type SheetWriter struct {
+	zipWriter *zip.Writer
+}
+
+func NewSheetWriter(w io.Writer) *SheetWriter {
+	return &SheetWriter{zip.NewWriter(w)}
+}
+
+func (sw *SheetWriter) Close() error {
+	return sw.zipWriter.Close()
 }
