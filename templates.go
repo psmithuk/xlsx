@@ -164,10 +164,10 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
 
 const templateSheetRows = `
         {{range $i, $e := .Rows}}
-        <row r="{{plus $i 1}}">{{.}}</row>`
+        <row r="{{plus $i 1}}">{{.}}</row>
+        {{end}}`
 
 const templateSheetEnd = `
-        {{end}}
       </sheetData>
    </worksheet>`
 
