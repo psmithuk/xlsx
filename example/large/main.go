@@ -12,9 +12,9 @@ func main() {
 		xlsx.Column{Name: "Col2", Width: 10},
 	}
 
-	sh := xlsx.NewSheetWithColumns(c)
+	sh := xlsx.NewSheetWithColumns(c, "MySheet")
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10; i++ {
 
 		r := sh.NewRow()
 

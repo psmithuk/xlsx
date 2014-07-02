@@ -50,6 +50,7 @@ type DocumentInfo struct {
 
 // XLSX Spreadsheet
 type Sheet struct {
+	Title           string
 	columns         []Column
 	rows            []Row
 	sharedStringMap map[string]int
@@ -58,13 +59,14 @@ type Sheet struct {
 }
 
 // Create a sheet with no dimensions
-func NewSheet() Sheet {
+func NewSheet(title string) Sheet {
 	c := make([]Column, 0)
 	r := make([]Row, 0)
 	ssm := make(map[string]int)
 	sst := make([]string, 0)
 
 	s := Sheet{
+		Title:           title,
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
@@ -75,12 +77,13 @@ func NewSheet() Sheet {
 }
 
 // Create a sheet with dimensions derived from the given columns
-func NewSheetWithColumns(c []Column) Sheet {
+func NewSheetWithColumns(c []Column, title string) Sheet {
 	r := make([]Row, 0)
 	ssm := make(map[string]int)
 	sst := make([]string, 0)
 
 	s := Sheet{
+		Title:           title,
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
@@ -258,9 +261,9 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	sw := ww.NewSheetWriter("sheet1")
+	sw := ww.NewSheetWriter(s.Title)
+
 	sw.Write(s)
-	sw.WriteRows(s.rows)
 	sw.WriteRows(s.rows)
 	sw.Close()
 
@@ -283,7 +286,7 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, nil)
+	err = TemplateApp.Execute(f, s)
 	if err != nil {
 		return err
 	}
@@ -301,7 +304,7 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, nil)
+	err = TemplateWorkbook.Execute(f, s)
 	if err != nil {
 		return err
 	}
@@ -339,8 +342,8 @@ func (ww *WorkbookWriter) Close() error {
 	return ww.zipWriter.Close()
 }
 
-func (ww *WorkbookWriter) NewSheetWriter(name string) *SheetWriter {
-	f, err := ww.zipWriter.Create("xl/worksheets/" + name + ".xml")
+func (ww *WorkbookWriter) NewSheetWriter(title string) *SheetWriter {
+	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
 	return &SheetWriter{f, err, 0, 0}
 }
 

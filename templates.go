@@ -83,7 +83,7 @@ const templateWorkbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?
           <workbookView xWindow="480" yWindow="60" windowWidth="18195" windowHeight="8505"/>
       </bookViews>
       <sheets>
-          <sheet name="Data" sheetId="1" r:id="rId1"/>
+          <sheet name="{{.Title}}" sheetId="1" r:id="rId1"/>
       </sheets>
       <calcPr calcId="145621"/>
   </workbook>`
@@ -189,7 +189,7 @@ const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   </HeadingPairs>
   <TitlesOfParts>
     <vt:vector size="1" baseType="lpstr">
-      <vt:lpstr>Data</vt:lpstr>
+      <vt:lpstr>{{.Title}}</vt:lpstr>
     </vt:vector>
   </TitlesOfParts>
   <LinksUpToDate>false</LinksUpToDate>
