@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/psmithuk/xlsx"
+	"github.com/sean-duffy/xlsx"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 
 	sh := xlsx.NewSheetWithColumns(c)
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10; i++ {
 
 		r := sh.NewRow()
 
@@ -27,8 +27,8 @@ func main() {
 		}
 
 		sh.AppendRow(r)
-    }
+	}
 
-    err := sh.SaveToFile("test.xlsx")
-    _ = err
+	err := sh.SaveToFile("test.xlsx")
+	_ = err
 }
