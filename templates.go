@@ -161,10 +161,7 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
         </cols>
       <sheetData>`
 
-const templateSheetRows = `
-        {{range $i, $e := .Rows}}
-        <row r="{{plus $i 1}}">{{.}}</row>
-        {{end}}`
+const templateSheetRows = `<row r="{{.Index}}">{{.Row}}</row>`
 
 const templateSheetEnd = `
  <dimension ref="{{.Start}}:{{.End}}"/>

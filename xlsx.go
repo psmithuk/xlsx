@@ -201,19 +201,14 @@ func (s *Sheet) SaveToFile(filename string) error {
 func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 	var err error
-
-	sheet := struct {
-		Rows []string
-	}{
-		Rows: make([]string, len(rows)),
-	}
+	var rowString string
 
 	for i, r := range rows {
 		rb := &bytes.Buffer{}
 
-        if sw.maxNCols < uint64(len(r.Cells)) {
-            sw.maxNCols = uint64(len(r.Cells))
-        }
+		if sw.maxNCols < uint64(len(r.Cells)) {
+			sw.maxNCols = uint64(len(r.Cells))
+		}
 
 		for j, c := range r.Cells {
 
@@ -221,7 +216,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				CellIndex string
 				Value     string
 			}{
-				CellIndex: CellIndex(uint64(j), uint64(i) + sw.currentIndex),
+				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
 				Value:     c.Value,
 			}
 
@@ -238,17 +233,17 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				return err
 			}
 		}
-		sheet.Rows[i] = rb.String()
+
+		rowString = fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
+
+		_, err = io.WriteString(sw.f, rowString)
+		if err != nil {
+			return err
+		}
+
 	}
 
-    sw.currentIndex += uint64(len(rows))
-
-	err = TemplateSheetRows.Execute(sw.f, sheet)
-	if err != nil {
-		return err
-	}
-
-
+	sw.currentIndex += uint64(len(rows))
 
 	return nil
 }
@@ -264,11 +259,10 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	}
 
 	sw := ww.NewSheetWriter("sheet1")
-
 	sw.Write(s)
 	sw.WriteRows(s.rows)
 	sw.WriteRows(s.rows)
-    sw.Close()
+	sw.Close()
 
 	err = ww.Close()
 	if err != nil {
@@ -351,31 +345,31 @@ func (ww *WorkbookWriter) NewSheetWriter(name string) *SheetWriter {
 }
 
 type SheetWriter struct {
-	f   io.Writer
-	err error
-    currentIndex uint64
-    maxNCols uint64
+	f            io.Writer
+	err          error
+	currentIndex uint64
+	maxNCols     uint64
 }
 
 func (sw *SheetWriter) Close() error {
-    sheet := struct {
+	sheet := struct {
 		Start string
 		End   string
 	}{
-        Start: "A1",
-        End: CellIndex(sw.maxNCols-1, sw.currentIndex-1),
-    }
+		Start: "A1",
+		End:   CellIndex(sw.maxNCols-1, sw.currentIndex-1),
+	}
 
 	err := TemplateSheetEnd.Execute(sw.f, sheet)
 	return err
 }
 
 func (sw *SheetWriter) Write(s *Sheet) error {
-    sheet := struct {
-        Cols []Column
-    }{
+	sheet := struct {
+		Cols []Column
+	}{
 		Cols: s.columns,
-    }
+	}
 
 	err := TemplateSheetStart.Execute(sw.f, sheet)
 	return err
