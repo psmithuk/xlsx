@@ -348,7 +348,7 @@ func (ww *WorkbookWriter) Close() error {
 
 func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
 	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
-	sw := &SheetWriter{f, err, 0, 0}
+	sw := &SheetWriter{f, err, 0, 0, false}
 
 	if ww.sheetWriter != nil {
 		ww.sheetWriter.Close()
@@ -365,9 +365,14 @@ type SheetWriter struct {
 	err          error
 	currentIndex uint64
 	maxNCols     uint64
+	closed       bool
 }
 
 func (sw *SheetWriter) Close() error {
+	if sw.closed {
+		panic("SheetWriter already closed")
+	}
+
 	sheet := struct {
 		Start string
 		End   string
@@ -377,6 +382,9 @@ func (sw *SheetWriter) Close() error {
 	}
 
 	err := TemplateSheetEnd.Execute(sw.f, sheet)
+
+	sw.closed = true
+
 	return err
 }
 
