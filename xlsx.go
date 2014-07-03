@@ -262,7 +262,7 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 
 	sw := ww.NewSheetWriter(s.Title)
 
-	sw.Write(s)
+	sw.WriteHeader(s)
 	sw.WriteRows(s.rows)
 	sw.Close()
 
@@ -366,7 +366,7 @@ func (sw *SheetWriter) Close() error {
 	return err
 }
 
-func (sw *SheetWriter) Write(s *Sheet) error {
+func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 	sheet := struct {
 		Cols []Column
 	}{
