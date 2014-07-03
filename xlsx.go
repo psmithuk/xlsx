@@ -262,7 +262,10 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 
 	sw := ww.NewSheetWriter(s)
 
-	sw.WriteRows(s.rows)
+	err = sw.WriteRows(s.rows)
+	if err != nil {
+		return err
+	}
 
 	err = ww.Close()
 	if err != nil {
@@ -338,7 +341,10 @@ func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
 
 func (ww *WorkbookWriter) Close() error {
 	if ww.sheetWriter != nil {
-		ww.sheetWriter.Close()
+		err := ww.sheetWriter.Close()
+		if err != nil {
+			return err
+		}
 	}
 	return ww.zipWriter.Close()
 }
@@ -349,6 +355,9 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
 
 	if ww.sheetWriter != nil {
 		ww.sheetWriter.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	ww.sheetWriter = sw
