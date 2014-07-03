@@ -12,7 +12,8 @@ func main() {
 		xlsx.Column{Name: "Col2", Width: 10},
 	}
 
-	sh := xlsx.NewSheetWithColumns(c, "MySheet")
+	sh := xlsx.NewSheetWithColumns(c)
+	sh.Title = "MySheet"
 
 	for i := 0; i < 10; i++ {
 
