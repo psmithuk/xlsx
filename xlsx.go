@@ -59,14 +59,14 @@ type Sheet struct {
 }
 
 // Create a sheet with no dimensions
-func NewSheet(title string) Sheet {
+func NewSheet() Sheet {
 	c := make([]Column, 0)
 	r := make([]Row, 0)
 	ssm := make(map[string]int)
 	sst := make([]string, 0)
 
 	s := Sheet{
-		Title:           title,
+		Title:           "Data",
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
@@ -77,13 +77,13 @@ func NewSheet(title string) Sheet {
 }
 
 // Create a sheet with dimensions derived from the given columns
-func NewSheetWithColumns(c []Column, title string) Sheet {
+func NewSheetWithColumns(c []Column) Sheet {
 	r := make([]Row, 0)
 	ssm := make(map[string]int)
 	sst := make([]string, 0)
 
 	s := Sheet{
-		Title:           title,
+		Title:           "Data",
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
