@@ -204,7 +204,6 @@ func (s *Sheet) SaveToFile(filename string) error {
 func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 	var err error
-	var rowString string
 
 	for i, r := range rows {
 		rb := &bytes.Buffer{}
@@ -237,7 +236,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 			}
 		}
 
-		rowString = fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
+		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
 
 		_, err = io.WriteString(sw.f, rowString)
 		if err != nil {
