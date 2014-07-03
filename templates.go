@@ -159,13 +159,15 @@ const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <vt:lpstr>Worksheets</vt:lpstr>
       </vt:variant>
       <vt:variant>
-        <vt:i4>1</vt:i4>
+        <vt:i4>{{ len . }}</vt:i4>
       </vt:variant>
     </vt:vector>
   </HeadingPairs>
   <TitlesOfParts>
     <vt:vector size="1" baseType="lpstr">
-      <vt:lpstr>{{.Title}}</vt:lpstr>
+      {{ range $i, $e := . }}
+      <vt:lpstr>{{$e.Title}}</vt:lpstr>
+      {{ end }}
     </vt:vector>
   </TitlesOfParts>
   <LinksUpToDate>false</LinksUpToDate>
