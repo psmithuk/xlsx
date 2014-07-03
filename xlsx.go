@@ -268,11 +268,8 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	}
 
 	err = ww.Close()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
@@ -355,9 +352,6 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
 
 	if ww.sheetWriter != nil {
 		ww.sheetWriter.Close()
-		if err != nil {
-			return err
-		}
 	}
 
 	ww.sheetWriter = sw
