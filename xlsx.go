@@ -255,12 +255,10 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 
 	ww := NewWorkbookWriter(w)
 
-	err := ww.WriteHeader(s)
+	sw, err := ww.NewSheetWriter(s)
 	if err != nil {
 		return err
 	}
-
-	sw := ww.NewSheetWriter(s)
 
 	err = sw.WriteRows(s.rows)
 	if err != nil {
@@ -273,6 +271,10 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 }
 
 func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
+
+	if ww.headerWritten {
+		panic("Workbook header already written")
+	}
 
 	z := ww.zipWriter
 
@@ -328,12 +330,13 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 }
 
 type WorkbookWriter struct {
-	zipWriter   *zip.Writer
-	sheetWriter *SheetWriter
+	zipWriter     *zip.Writer
+	sheetWriter   *SheetWriter
+	headerWritten bool
 }
 
 func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil}
+	return &WorkbookWriter{zip.NewWriter(w), nil, false}
 }
 
 func (ww *WorkbookWriter) Close() error {
@@ -343,10 +346,18 @@ func (ww *WorkbookWriter) Close() error {
 			return err
 		}
 	}
+
 	return ww.zipWriter.Close()
 }
 
-func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
+func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
+	if !ww.headerWritten {
+		err := ww.WriteHeader(s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
 	sw := &SheetWriter{f, err, 0, 0, false}
 
@@ -357,7 +368,7 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
 	ww.sheetWriter = sw
 	sw.WriteHeader(s)
 
-	return sw
+	return sw, err
 }
 
 type SheetWriter struct {
