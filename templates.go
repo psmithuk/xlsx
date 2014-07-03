@@ -16,7 +16,6 @@ var (
 	TemplateStyles                *template.Template
 	TemplateStringLookups         *template.Template
 	TemplateSheetStart            *template.Template
-	TemplateSheetRows             *template.Template
 	TemplateSheetEnd              *template.Template
 	TemplateCellNumber            *template.Template
 	TemplateCellString            *template.Template
@@ -47,7 +46,6 @@ func init() {
 	TemplateStyles = template.Must(template.New("templateStyles").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStyles, "")))
 	TemplateStringLookups = template.Must(template.New("templateStringLookups").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStringLookups, "")))
 	TemplateSheetStart = template.Must(template.New("templateSheetStart").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetStart, "")))
-	TemplateSheetRows = template.Must(template.New("templateSheetRows").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetRows, "")))
 	TemplateSheetEnd = template.Must(template.New("templateSheetEnd").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetEnd, "")))
 	TemplateCellNumber = template.Must(template.New("templateCellNumber").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellNumber, "")))
 	TemplateCellString = template.Must(template.New("templateCellString").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellString, "")))
@@ -160,8 +158,6 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
           {{end}}
         </cols>
       <sheetData>`
-
-const templateSheetRows = `<row r="{{.Index}}">{{.Row}}</row>`
 
 const templateSheetEnd = `
  <dimension ref="{{.Start}}:{{.End}}"/>
