@@ -264,7 +264,6 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 
 	sw.WriteHeader(s)
 	sw.WriteRows(s.rows)
-	sw.Close()
 
 	err = ww.Close()
 	if err != nil {
@@ -330,20 +329,32 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 }
 
 type WorkbookWriter struct {
-	zipWriter *zip.Writer
+	zipWriter   *zip.Writer
+	sheetWriter *SheetWriter
 }
 
 func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w)}
+	return &WorkbookWriter{zip.NewWriter(w), nil}
 }
 
 func (ww *WorkbookWriter) Close() error {
+	if ww.sheetWriter != nil {
+		ww.sheetWriter.Close()
+	}
 	return ww.zipWriter.Close()
 }
 
 func (ww *WorkbookWriter) NewSheetWriter(title string) *SheetWriter {
 	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
-	return &SheetWriter{f, err, 0, 0}
+	sw := &SheetWriter{f, err, 0, 0}
+
+	if ww.sheetWriter != nil {
+		ww.sheetWriter.Close()
+	}
+
+	ww.sheetWriter = sw
+
+	return sw
 }
 
 type SheetWriter struct {
