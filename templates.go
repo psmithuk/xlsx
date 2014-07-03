@@ -73,7 +73,9 @@ const templateWorkbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?
           <workbookView xWindow="480" yWindow="60" windowWidth="18195" windowHeight="8505"/>
       </bookViews>
       <sheets>
-          <sheet name="{{.Title}}" sheetId="1" r:id="rId1"/>
+          {{ range $i, $e := . }}
+          <sheet name="{{$e.Title}}" sheetId="{{plus $i 1 }}" r:id="rId{{plus $i 1}}"/>
+          {{ end }}
       </sheets>
       <calcPr calcId="145621"/>
   </workbook>`

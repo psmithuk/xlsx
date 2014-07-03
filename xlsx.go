@@ -264,7 +264,7 @@ func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, s[0])
+	err = TemplateWorkbook.Execute(f, s)
 	if err != nil {
 		return err
 	}
