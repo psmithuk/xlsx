@@ -270,7 +270,7 @@ func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 	}
 
 	f, err = z.Create("xl/_rels/workbook.xml.rels")
-	err = TemplateWorkbookRelationships.Execute(f, nil)
+	err = TemplateWorkbookRelationships.Execute(f, s)
 	if err != nil {
 		return err
 	}
