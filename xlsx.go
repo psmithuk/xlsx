@@ -232,11 +232,7 @@ func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
 }
 
 // Write the header files of the workbook
-func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
-	if ww.closed {
-		panic("Can not write to closed WorkbookWriter")
-	}
-
+func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 	if ww.headerWritten {
 		panic("Workbook header already written")
 	}
@@ -250,13 +246,14 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, s)
+	err = TemplateApp.Execute(os.Stdout, s[0])
+	err = TemplateApp.Execute(f, s[0])
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("docProps/core.xml")
-	err = TemplateCore.Execute(f, s.DocumentInfo)
+	err = TemplateCore.Execute(f, s[0].DocumentInfo)
 	if err != nil {
 		return err
 	}
@@ -268,7 +265,7 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, s)
+	err = TemplateWorkbook.Execute(f, s[0])
 	if err != nil {
 		return err
 	}
@@ -286,7 +283,7 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s.SharedStrings())
+	err = TemplateStringLookups.Execute(f, s[0].SharedStrings())
 	if err != nil {
 		return err
 	}
