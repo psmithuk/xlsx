@@ -201,6 +201,7 @@ func (s *Sheet) SaveToFile(filename string) error {
 	return err
 }
 
+// Save the given rows to the sheet's writer
 func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 	var err error
@@ -270,6 +271,7 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	return err
 }
 
+// Write the header files of the workbook
 func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 
 	if ww.headerWritten {
@@ -329,16 +331,19 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	return nil
 }
 
+// Handles the writing of an XLSX workbook
 type WorkbookWriter struct {
 	zipWriter     *zip.Writer
 	sheetWriter   *SheetWriter
 	headerWritten bool
 }
 
+// Creates a new WorkbookWriter
 func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
 	return &WorkbookWriter{zip.NewWriter(w), nil, false}
 }
 
+// Closes the WorkbookWriter
 func (ww *WorkbookWriter) Close() error {
 	if ww.sheetWriter != nil {
 		err := ww.sheetWriter.Close()
@@ -350,6 +355,7 @@ func (ww *WorkbookWriter) Close() error {
 	return ww.zipWriter.Close()
 }
 
+// Creates a new SheetWriter
 func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	if !ww.headerWritten {
 		err := ww.WriteHeader(s)
@@ -371,6 +377,7 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	return sw, err
 }
 
+// Handles the writing of a sheet
 type SheetWriter struct {
 	f            io.Writer
 	err          error
@@ -379,6 +386,7 @@ type SheetWriter struct {
 	closed       bool
 }
 
+// Closes the SheetWriter
 func (sw *SheetWriter) Close() error {
 	if sw.closed {
 		panic("SheetWriter already closed")
@@ -399,6 +407,7 @@ func (sw *SheetWriter) Close() error {
 	return err
 }
 
+// Writes the header of a sheet
 func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 	sheet := struct {
 		Cols []Column
