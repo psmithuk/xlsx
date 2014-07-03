@@ -260,9 +260,8 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	sw := ww.NewSheetWriter(s.Title)
+	sw := ww.NewSheetWriter(s)
 
-	sw.WriteHeader(s)
 	sw.WriteRows(s.rows)
 
 	err = ww.Close()
@@ -344,7 +343,7 @@ func (ww *WorkbookWriter) Close() error {
 	return ww.zipWriter.Close()
 }
 
-func (ww *WorkbookWriter) NewSheetWriter(title string) *SheetWriter {
+func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) *SheetWriter {
 	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
 	sw := &SheetWriter{f, err, 0, 0}
 
@@ -353,6 +352,7 @@ func (ww *WorkbookWriter) NewSheetWriter(title string) *SheetWriter {
 	}
 
 	ww.sheetWriter = sw
+	sw.WriteHeader(s)
 
 	return sw
 }
