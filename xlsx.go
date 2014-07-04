@@ -357,6 +357,8 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 
 	ww.sheetNames = append(ww.sheetNames, s.Title)
 
+	ww.sheetNames = append(ww.sheetNames, s.Title)
+
 	return sw, err
 }
 
