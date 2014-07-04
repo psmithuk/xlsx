@@ -322,11 +322,11 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 		return err
 	}
 
-	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s.SharedStrings())
-	if err != nil {
-		return err
-	}
+	//f, err = z.Create("xl/sharedStrings.xml")
+	//err = TemplateStringLookups.Execute(f, s.SharedStrings())
+	//if err != nil {
+	//return err
+	//}
 
 	return nil
 }
