@@ -287,7 +287,7 @@ func (ww *WorkbookWriter) WriteHeader() error {
 	//	return err
 	//}
 
-	return nil
+	return err
 }
 
 // Handles the writing of an XLSX workbook
@@ -311,8 +311,8 @@ func (ww *WorkbookWriter) Close() error {
 		panic("WorkbookWriter already closed")
 	}
 
-	if ww.sheetWriter != nil {
-		err := ww.sheetWriter.Close()
+	if !ww.headerWritten {
+		err := ww.WriteHeader()
 		if err != nil {
 			return err
 		}
