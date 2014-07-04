@@ -1,11 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"github.com/sean-duffy/xlsx"
+	"os"
 	"strconv"
 )
 
 func main() {
+
+	outputfile, err := os.Create("test.xlsx")
+
+	w := bufio.NewWriter(outputfile)
+	ww := xlsx.NewWorkbookWriter(w)
 
 	c := []xlsx.Column{
 		xlsx.Column{Name: "Col1", Width: 10},
@@ -15,7 +22,9 @@ func main() {
 	sh := xlsx.NewSheetWithColumns(c)
 	sh.Title = "MySheet"
 
-	for i := 0; i < 10; i++ {
+	sw, err := ww.NewSheetWriter(&sh)
+
+	for i := 0; i < 1000000; i++ {
 
 		r := sh.NewRow()
 
@@ -28,9 +37,13 @@ func main() {
 			Value: "1",
 		}
 
-		sh.AppendRow(r)
+		err = sw.WriteRows([]xlsx.Row{r})
 	}
 
-	err := sh.SaveToFile("test.xlsx")
-	_ = err
+	err = ww.Close()
+	defer w.Flush()
+
+	if err != nil {
+		panic(err)
+	}
 }
