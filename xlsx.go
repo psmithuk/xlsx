@@ -247,7 +247,6 @@ func (ww *WorkbookWriter) WriteHeader() error {
 
 	f, err = z.Create("docProps/app.xml")
 	err = TemplateApp.Execute(f, ww.sheetNames)
-	err = TemplateApp.Execute(os.Stdout, ww.sheetNames)
 	if err != nil {
 		return err
 	}
