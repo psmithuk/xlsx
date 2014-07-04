@@ -2,9 +2,10 @@ package main
 
 import (
 	"bufio"
-	"github.com/sean-duffy/xlsx"
 	"os"
 	"strconv"
+
+	"github.com/sean-duffy/xlsx"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 
 	sw, err := ww.NewSheetWriter(&sh)
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 100000; i++ {
 
 		r := sh.NewRow()
 

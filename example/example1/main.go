@@ -1,12 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"strconv"
-	"time"
-
-	"github.com/psmithuk/xlsx"
+	"github.com/sean-duffy/xlsx"
 )
 
 func main() {
@@ -52,7 +47,7 @@ func main() {
 
 	sh.AppendRow(r2)
 
-	err := sh.SaveToFile("/tmp/test.xlsx")
+	err := sh.SaveToFile("test.xlsx")
 	if err != nil {
 		log.Print(err)
 	}
