@@ -7,10 +7,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"html"
+	//"html"
 	"io"
 	"os"
-	"strconv"
+	//"strconv"
 	"time"
 )
 
@@ -116,27 +116,27 @@ func (s *Sheet) AppendRow(r Row) error {
 
 	cells := make([]Cell, len(s.columns))
 
-	for n, c := range r.Cells {
-		cells[n].Type = c.Type
-		cells[n].Value = c.Value
+	//for n, c := range r.Cells {
+	//	cells[n].Type = c.Type
+	//	cells[n].Value = c.Value
 
-		if cells[n].Type == CellTypeString {
-			// calculate string reference
-			cells[n].Value = html.EscapeString(cells[n].Value)
-			i, exists := s.sharedStringMap[cells[n].Value]
-			if !exists {
-				i = len(s.sharedStrings)
-				s.sharedStringMap[cells[n].Value] = i
-				s.sharedStrings = append(s.sharedStrings, cells[n].Value)
-			}
-			cells[n].Value = strconv.Itoa(i)
-		} else if cells[n].Type == CellTypeDatetime {
-			d, err := time.Parse(time.RFC3339, cells[n].Value)
-			if err == nil {
-				cells[n].Value = OADate(d)
-			}
-		}
-	}
+	//	if cells[n].Type == CellTypeString {
+	//		// calculate string reference
+	//		cells[n].Value = html.EscapeString(cells[n].Value)
+	//		i, exists := s.sharedStringMap[cells[n].Value]
+	//		if !exists {
+	//			i = len(s.sharedStrings)
+	//			s.sharedStringMap[cells[n].Value] = i
+	//			s.sharedStrings = append(s.sharedStrings, cells[n].Value)
+	//		}
+	//		cells[n].Value = strconv.Itoa(i)
+	//	} else if cells[n].Type == CellTypeDatetime {
+	//		d, err := time.Parse(time.RFC3339, cells[n].Value)
+	//		if err == nil {
+	//			cells[n].Value = OADate(d)
+	//		}
+	//	}
+	//}
 
 	row := s.NewRow()
 	row.Cells = cells
@@ -322,11 +322,11 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 		return err
 	}
 
-	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s.SharedStrings())
-	if err != nil {
-		return err
-	}
+	//f, err = z.Create("xl/sharedStrings.xml")
+	//err = TemplateStringLookups.Execute(f, s.SharedStrings())
+	//if err != nil {
+	//return err
+	//}
 
 	return nil
 }
