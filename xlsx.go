@@ -201,6 +201,26 @@ func (s *Sheet) SaveToFile(filename string) error {
 	return err
 }
 
+// Save the XLSX file to the given writer
+func (s *Sheet) SaveToWriter(w io.Writer) error {
+
+	ww := NewWorkbookWriter(w)
+
+	sw, err := ww.NewSheetWriter(s)
+	if err != nil {
+		return err
+	}
+
+	err = sw.WriteRows(s.rows)
+	if err != nil {
+		return err
+	}
+
+	err = ww.Close()
+
+	return err
+}
+
 // Save the given rows to the sheet's writer
 func (sw *SheetWriter) WriteRows(rows []Row) error {
 
@@ -249,26 +269,6 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 	sw.currentIndex += uint64(len(rows))
 
 	return nil
-}
-
-// Save the XLSX file to the given writer
-func (s *Sheet) SaveToWriter(w io.Writer) error {
-
-	ww := NewWorkbookWriter(w)
-
-	sw, err := ww.NewSheetWriter(s)
-	if err != nil {
-		return err
-	}
-
-	err = sw.WriteRows(s.rows)
-	if err != nil {
-		return err
-	}
-
-	err = ww.Close()
-
-	return err
 }
 
 // Write the header files of the workbook
