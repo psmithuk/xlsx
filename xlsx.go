@@ -41,7 +41,7 @@ type Column struct {
 	Width uint64
 }
 
-// XLSX Spreadsheet Document Properties
+// XLSX Workbook Document Properties
 type DocumentInfo struct {
 	CreatedBy  string
 	ModifiedBy string
@@ -232,7 +232,7 @@ func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
 }
 
 // Write the header files of the workbook
-func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
+func (ww *WorkbookWriter) WriteHeader() error {
 	if ww.headerWritten {
 		panic("Workbook header already written")
 	}
@@ -246,13 +246,14 @@ func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 	}
 
 	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, s)
+	err = TemplateApp.Execute(f, ww.sheetNames)
+	err = TemplateApp.Execute(os.Stdout, ww.sheetNames)
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("docProps/core.xml")
-	err = TemplateCore.Execute(f, s[0].DocumentInfo)
+	err = TemplateCore.Execute(f, ww.DocumentInfo)
 	if err != nil {
 		return err
 	}
@@ -264,13 +265,13 @@ func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, s)
+	err = TemplateWorkbook.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("xl/_rels/workbook.xml.rels")
-	err = TemplateWorkbookRelationships.Execute(f, s)
+	err = TemplateWorkbookRelationships.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
@@ -281,13 +282,28 @@ func (ww *WorkbookWriter) WriteHeader(s ...*Sheet) error {
 		return err
 	}
 
-	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s[0].SharedStrings())
-	if err != nil {
-		return err
-	}
+	//f, err = z.Create("xl/sharedStrings.xml")
+	//err = TemplateStringLookups.Execute(f, s[0].SharedStrings())
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
+}
+
+// Handles the writing of an XLSX workbook
+type WorkbookWriter struct {
+	zipWriter     *zip.Writer
+	sheetWriter   *SheetWriter
+	headerWritten bool
+	sheetNames    []string
+	SharedStrings []string
+	DocumentInfo  *DocumentInfo
+}
+
+// Creates a new WorkbookWriter
+func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
+	return &WorkbookWriter{zip.NewWriter(w), nil, false, []string{}, nil, nil}
 }
 
 // Closes the WorkbookWriter
@@ -327,6 +343,8 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
 	sw := &SheetWriter{f, err, 0, 0, false}
 
+	ww.DocumentInfo = &s.DocumentInfo
+
 	if ww.sheetWriter != nil {
 		err = ww.sheetWriter.Close()
 		if err != nil {
@@ -336,6 +354,8 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 
 	ww.sheetWriter = sw
 	err = sw.WriteHeader(s)
+
+	ww.sheetNames = append(ww.sheetNames, s.Title)
 
 	return sw, err
 }

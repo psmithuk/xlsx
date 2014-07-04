@@ -74,7 +74,7 @@ const templateWorkbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?
       </bookViews>
       <sheets>
           {{ range $i, $e := . }}
-          <sheet name="{{$e.Title}}" sheetId="{{plus $i 1 }}" r:id="rId{{plus $i 1}}"/>
+          <sheet name="{{$e}}" sheetId="{{plus $i 1 }}" r:id="rId{{plus $i 1}}"/>
           {{ end }}
       </sheets>
       <calcPr calcId="145621"/>
@@ -171,7 +171,7 @@ const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <TitlesOfParts>
     <vt:vector size="1" baseType="lpstr">
       {{ range $i, $e := . }}
-      <vt:lpstr>{{$e.Title}}</vt:lpstr>
+      <vt:lpstr>{{$e}}</vt:lpstr>
       {{ end }}
     </vt:vector>
   </TitlesOfParts>
