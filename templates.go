@@ -51,7 +51,9 @@ const templateContentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="y
       <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
       <Default Extension="xml" ContentType="application/xml"/>
       <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-      <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+      {{ range $i, $_ := . }}
+      <Override PartName="/xl/worksheets/sheet{{plus $i 1}}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+      {{ end }}
       <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
       <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
       <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
@@ -86,8 +88,8 @@ const templateWorkbookRelationships = `<?xml version="1.0" encoding="UTF-8" stan
       <Relationship Id="rId{{plus $i 1}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet{{plus $i 1}}.xml"/>
       {{ end }}
       {{ $i := len . }}
-      <Relationship Id="rId{{plus $i 2}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-      <Relationship Id="rId{{plus $i 3}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+      <Relationship Id="rId{{plus $i 1}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      <Relationship Id="rId{{plus $i 2}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
   </Relationships>`
 
 const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

@@ -240,7 +240,7 @@ func (ww *WorkbookWriter) WriteHeader() error {
 	z := ww.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
-	err = TemplateContentTypes.Execute(f, nil)
+	err = TemplateContentTypes.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
@@ -332,14 +332,14 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 		panic("Can not write to closed WorkbookWriter")
 	}
 
-	if !ww.headerWritten {
-		err := ww.WriteHeader(s)
+	if ww.sheetWriter != nil {
+		err := ww.sheetWriter.Close()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
+	f, err := ww.zipWriter.Create("xl/worksheets/" + fmt.Sprintf("sheet%s", strconv.Itoa(len(ww.sheetNames)+1)) + ".xml")
 	sw := &SheetWriter{f, err, 0, 0, false}
 
 	ww.DocumentInfo = &s.DocumentInfo
