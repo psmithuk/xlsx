@@ -368,11 +368,14 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	sw := &SheetWriter{f, err, 0, 0, false}
 
 	if ww.sheetWriter != nil {
-		ww.sheetWriter.Close()
+		err = ww.sheetWriter.Close()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ww.sheetWriter = sw
-	sw.WriteHeader(s)
+	err = sw.WriteHeader(s)
 
 	return sw, err
 }
