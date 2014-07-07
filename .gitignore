@@ -2,6 +2,7 @@
 
 example/main
 example/large/large
+example/example1/example1
 
 # Test workbooks
 *.xlsx
