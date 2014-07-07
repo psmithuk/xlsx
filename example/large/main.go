@@ -44,8 +44,8 @@ func WriteStreaming() error {
 			Value: strconv.Itoa(i + 1),
 		}
 		r.Cells[1] = xlsx.Cell{
-			Type:  xlsx.CellTypeNumber,
-			Value: "1",
+			Type:  xlsx.CellTypeInlineString,
+			Value: "Test",
 		}
 
 		err = sw.WriteRows([]xlsx.Row{r})

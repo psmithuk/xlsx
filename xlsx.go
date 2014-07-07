@@ -21,6 +21,7 @@ const (
 	CellTypeNumber CellType = iota
 	CellTypeString
 	CellTypeDatetime
+	CellTypeInlineString
 )
 
 // XLSX Spreadsheet Cell
@@ -135,6 +136,8 @@ func (s *Sheet) AppendRow(r Row) error {
 			if err == nil {
 				cells[n].Value = OADate(d)
 			}
+		} else if cells[n].Type == CellTypeInlineString {
+			cells[n].Value = html.EscapeString(cells[n].Value)
 		}
 	}
 
@@ -385,6 +388,8 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 			switch c.Type {
 			case CellTypeString:
 				err = TemplateCellString.Execute(rb, cell)
+			case CellTypeInlineString:
+				err = TemplateCellInlineString.Execute(rb, cell)
 			case CellTypeNumber:
 				err = TemplateCellNumber.Execute(rb, cell)
 			case CellTypeDatetime:
