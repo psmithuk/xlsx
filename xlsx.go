@@ -221,56 +221,6 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	return err
 }
 
-// Save the given rows to the sheet's writer
-func (sw *SheetWriter) WriteRows(rows []Row) error {
-
-	var err error
-
-	for i, r := range rows {
-		rb := &bytes.Buffer{}
-
-		if sw.maxNCols < uint64(len(r.Cells)) {
-			sw.maxNCols = uint64(len(r.Cells))
-		}
-
-		for j, c := range r.Cells {
-
-			cell := struct {
-				CellIndex string
-				Value     string
-			}{
-				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
-				Value:     c.Value,
-			}
-
-			switch c.Type {
-			case CellTypeString:
-				err = TemplateCellString.Execute(rb, cell)
-			case CellTypeNumber:
-				err = TemplateCellNumber.Execute(rb, cell)
-			case CellTypeDatetime:
-				err = TemplateCellDateTime.Execute(rb, cell)
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-
-		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
-
-		_, err = io.WriteString(sw.f, rowString)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	sw.currentIndex += uint64(len(rows))
-
-	return nil
-}
-
 // Write the header files of the workbook
 func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 
@@ -392,6 +342,59 @@ type SheetWriter struct {
 	closed       bool
 }
 
+// Write the given rows to this SheetWriter
+func (sw *SheetWriter) WriteRows(rows []Row) error {
+	if sw.closed {
+		panic("SheetWriter already closed")
+	}
+
+	var err error
+
+	for i, r := range rows {
+		rb := &bytes.Buffer{}
+
+		if sw.maxNCols < uint64(len(r.Cells)) {
+			sw.maxNCols = uint64(len(r.Cells))
+		}
+
+		for j, c := range r.Cells {
+
+			cell := struct {
+				CellIndex string
+				Value     string
+			}{
+				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
+				Value:     c.Value,
+			}
+
+			switch c.Type {
+			case CellTypeString:
+				err = TemplateCellString.Execute(rb, cell)
+			case CellTypeNumber:
+				err = TemplateCellNumber.Execute(rb, cell)
+			case CellTypeDatetime:
+				err = TemplateCellDateTime.Execute(rb, cell)
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+
+		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
+
+		_, err = io.WriteString(sw.f, rowString)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	sw.currentIndex += uint64(len(rows))
+
+	return nil
+}
+
 // Closes the SheetWriter
 func (sw *SheetWriter) Close() error {
 	if sw.closed {
@@ -415,6 +418,10 @@ func (sw *SheetWriter) Close() error {
 
 // Writes the header of a sheet
 func (sw *SheetWriter) WriteHeader(s *Sheet) error {
+	if sw.closed {
+		panic("SheetWriter already closed")
+	}
+
 	sheet := struct {
 		Cols []Column
 	}{
