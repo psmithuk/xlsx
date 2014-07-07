@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"strconv"
 	"time"
 
 	"github.com/psmithuk/xlsx"
@@ -30,7 +27,7 @@ func main() {
 	}
 	r.Cells[2] = xlsx.Cell{
 		Type:  xlsx.CellTypeDatetime,
-		Value: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+		Value: time.Date(1980, 4, 24, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
 	}
 
 	sh.AppendRow(r)
@@ -47,13 +44,13 @@ func main() {
 	}
 	r2.Cells[2] = xlsx.Cell{
 		Type:  xlsx.CellTypeDatetime,
-		Value: time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+		Value: time.Date(2008, 1, 9, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
 	}
 
 	sh.AppendRow(r2)
 
-	err := sh.SaveToFile("/tmp/test.xlsx")
+	err := sh.SaveToFile("test.xlsx")
 	if err != nil {
-		log.Print(err)
+		println(err)
 	}
 }

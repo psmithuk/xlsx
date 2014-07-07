@@ -21,6 +21,7 @@ const (
 	CellTypeNumber CellType = iota
 	CellTypeString
 	CellTypeDatetime
+	CellTypeInlineString
 )
 
 // XLSX Spreadsheet Cell
@@ -50,6 +51,7 @@ type DocumentInfo struct {
 
 // XLSX Spreadsheet
 type Sheet struct {
+	Title           string
 	columns         []Column
 	rows            []Row
 	sharedStringMap map[string]int
@@ -65,6 +67,7 @@ func NewSheet() Sheet {
 	sst := make([]string, 0)
 
 	s := Sheet{
+		Title:           "Data",
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
@@ -81,6 +84,7 @@ func NewSheetWithColumns(c []Column) Sheet {
 	sst := make([]string, 0)
 
 	s := Sheet{
+		Title:           "Data",
 		columns:         c,
 		rows:            r,
 		sharedStringMap: ssm,
@@ -127,11 +131,6 @@ func (s *Sheet) AppendRow(r Row) error {
 				s.sharedStrings = append(s.sharedStrings, cells[n].Value)
 			}
 			cells[n].Value = strconv.Itoa(i)
-		} else if cells[n].Type == CellTypeDatetime {
-			d, err := time.Parse(time.RFC3339, cells[n].Value)
-			if err == nil {
-				cells[n].Value = OADate(d)
-			}
 		}
 	}
 
@@ -201,7 +200,48 @@ func (s *Sheet) SaveToFile(filename string) error {
 // Save the XLSX file to the given writer
 func (s *Sheet) SaveToWriter(w io.Writer) error {
 
-	z := zip.NewWriter(w)
+	ww := NewWorkbookWriter(w)
+
+	sw, err := ww.NewSheetWriter(s)
+	if err != nil {
+		return err
+	}
+
+	err = sw.WriteRows(s.rows)
+	if err != nil {
+		return err
+	}
+
+	err = ww.Close()
+
+	return err
+}
+
+// Handles the writing of an XLSX workbook
+type WorkbookWriter struct {
+	zipWriter     *zip.Writer
+	sheetWriter   *SheetWriter
+	headerWritten bool
+	closed        bool
+}
+
+// NewWorkbookWriter creates a new WorkbookWriter, which SheetWriters will
+// operate on. It must be closed when all Sheets have been written.
+func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
+	return &WorkbookWriter{zip.NewWriter(w), nil, false, false}
+}
+
+// Write the header files of the workbook
+func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
+	if ww.closed {
+		panic("Can not write to closed WorkbookWriter")
+	}
+
+	if ww.headerWritten {
+		panic("Workbook header already written")
+	}
+
+	z := ww.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
 	err = TemplateContentTypes.Execute(f, nil)
@@ -210,7 +250,7 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	}
 
 	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, nil)
+	err = TemplateApp.Execute(f, s)
 	if err != nil {
 		return err
 	}
@@ -228,7 +268,7 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, nil)
+	err = TemplateWorkbook.Execute(f, s)
 	if err != nil {
 		return err
 	}
@@ -251,36 +291,109 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
-	f, err = z.Create("xl/worksheets/sheet1.xml")
+	return nil
+}
 
-	sheet := struct {
-		Cols  []Column
-		Rows  []string
-		Start string
-		End   string
-	}{
-		Cols: s.columns,
-		Rows: make([]string, len(s.rows)),
+// Closes the WorkbookWriter
+func (ww *WorkbookWriter) Close() error {
+	if ww.closed {
+		panic("WorkbookWriter already closed")
 	}
 
-	sheet.Start = "A1"
-	sheet.End = CellIndex(uint64(len(s.columns)-1), uint64(len(s.rows)-1))
+	if ww.sheetWriter != nil {
+		err := ww.sheetWriter.Close()
+		if err != nil {
+			return err
+		}
+	}
 
-	for i, r := range s.rows {
+	ww.closed = true
+
+	return ww.zipWriter.Close()
+}
+
+// NewSheetWriter creates a new SheetWriter in this workbook using the given sheet.
+// It returns a SheetWriter to which rows can be written.
+// All rows must be written to the SheetWriter before the next call to NewSheetWriter,
+// as this will automatically close the previous SheetWriter.
+func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
+	if ww.closed {
+		panic("Can not write to closed WorkbookWriter")
+	}
+
+	if !ww.headerWritten {
+		err := ww.WriteHeader(s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
+	sw := &SheetWriter{f, err, 0, 0, false}
+
+	if ww.sheetWriter != nil {
+		err = ww.sheetWriter.Close()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ww.sheetWriter = sw
+	err = sw.WriteHeader(s)
+
+	return sw, err
+}
+
+// Handles the writing of a sheet
+type SheetWriter struct {
+	f            io.Writer
+	err          error
+	currentIndex uint64
+	maxNCols     uint64
+	closed       bool
+}
+
+// Write the given rows to this SheetWriter
+func (sw *SheetWriter) WriteRows(rows []Row) error {
+	if sw.closed {
+		panic("Can not write to closed SheetWriter")
+	}
+
+	var err error
+
+	for i, r := range rows {
 		rb := &bytes.Buffer{}
+
+		if sw.maxNCols < uint64(len(r.Cells)) {
+			sw.maxNCols = uint64(len(r.Cells))
+		}
+
 		for j, c := range r.Cells {
 
 			cell := struct {
 				CellIndex string
 				Value     string
+				Type      CellType
 			}{
-				CellIndex: CellIndex(uint64(j), uint64(i)),
+				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
 				Value:     c.Value,
+				Type:      c.Type,
+			}
+
+			if c.Type == CellTypeDatetime {
+				d, err := time.Parse(time.RFC3339, c.Value)
+				if err == nil {
+					cell.Value = OADate(d)
+				}
+			} else if c.Type == CellTypeInlineString {
+				cell.Value = html.EscapeString(c.Value)
 			}
 
 			switch c.Type {
 			case CellTypeString:
 				err = TemplateCellString.Execute(rb, cell)
+			case CellTypeInlineString:
+				err = TemplateCellInlineString.Execute(rb, cell)
 			case CellTypeNumber:
 				err = TemplateCellNumber.Execute(rb, cell)
 			case CellTypeDatetime:
@@ -291,18 +404,53 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 				return err
 			}
 		}
-		sheet.Rows[i] = rb.String()
+
+		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
+
+		_, err = io.WriteString(sw.f, rowString)
+		if err != nil {
+			return err
+		}
+
 	}
 
-	err = TemplateSheet.Execute(f, sheet)
-	if err != nil {
-		return err
-	}
-
-	err = z.Close()
-	if err != nil {
-		return err
-	}
+	sw.currentIndex += uint64(len(rows))
 
 	return nil
+}
+
+// Closes the SheetWriter
+func (sw *SheetWriter) Close() error {
+	if sw.closed {
+		panic("SheetWriter already closed")
+	}
+
+	sheet := struct {
+		Start string
+		End   string
+	}{
+		Start: "A1",
+		End:   CellIndex(sw.maxNCols-1, sw.currentIndex-1),
+	}
+
+	err := TemplateSheetEnd.Execute(sw.f, sheet)
+
+	sw.closed = true
+
+	return err
+}
+
+// Writes the header of a sheet
+func (sw *SheetWriter) WriteHeader(s *Sheet) error {
+	if sw.closed {
+		panic("Can not write to closed SheetWriter")
+	}
+
+	sheet := struct {
+		Cols []Column
+	}{
+		Cols: s.columns,
+	}
+
+	return TemplateSheetStart.Execute(sw.f, sheet)
 }

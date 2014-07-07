@@ -2,6 +2,8 @@ package xlsx
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"testing"
 	"time"
 )
@@ -130,8 +132,20 @@ func TestTemplates(t *testing.T) {
 		Start: "A1",
 		End:   "C3",
 	}
-	err = TemplateSheet.Execute(&b, sheet)
+
+	err = TemplateSheetStart.Execute(&b, sheet)
 	if err != nil {
-		t.Errorf("template TemplateSheet failed to Execute returning error %s", err.Error())
+		t.Errorf("template TemplateSheetStart failed to Execute returning error %s", err.Error())
+	}
+
+	for i, _ := range sheet.Rows {
+		rb := &bytes.Buffer{}
+		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i), rb.String())
+		_, err = io.WriteString(&b, rowString)
+	}
+
+	err = TemplateSheetEnd.Execute(&b, sheet)
+	if err != nil {
+		t.Errorf("template TemplateSheetEnd failed to Execute returning error %s", err.Error())
 	}
 }
