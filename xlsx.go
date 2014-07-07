@@ -221,8 +221,25 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	return err
 }
 
+// Handles the writing of an XLSX workbook
+type WorkbookWriter struct {
+	zipWriter     *zip.Writer
+	sheetWriter   *SheetWriter
+	headerWritten bool
+	closed        bool
+}
+
+// NewWorkbookWriter creates a new WorkbookWriter, which SheetWriters will
+// operate on. It must be closed when all Sheets have been written.
+func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
+	return &WorkbookWriter{zip.NewWriter(w), nil, false}
+}
+
 // Write the header files of the workbook
 func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
+	if ww.closed {
+		panic("Can not write to closed WorkbookWriter")
+	}
 
 	if ww.headerWritten {
 		panic("Workbook header already written")
@@ -281,26 +298,20 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	return nil
 }
 
-// Handles the writing of an XLSX workbook
-type WorkbookWriter struct {
-	zipWriter     *zip.Writer
-	sheetWriter   *SheetWriter
-	headerWritten bool
-}
-
-// Creates a new WorkbookWriter
-func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil, false}
-}
-
 // Closes the WorkbookWriter
 func (ww *WorkbookWriter) Close() error {
+	if ww.closed {
+		panic("WorkbookWriter already closed")
+	}
+
 	if ww.sheetWriter != nil {
 		err := ww.sheetWriter.Close()
 		if err != nil {
 			return err
 		}
 	}
+
+	ww.closed = true
 
 	return ww.zipWriter.Close()
 }
@@ -310,6 +321,10 @@ func (ww *WorkbookWriter) Close() error {
 // All rows must be written to the SheetWriter before the next call to NewSheetWriter,
 // as this will automatically close the previous SheetWriter.
 func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
+	if ww.closed {
+		panic("Can not write to closed WorkbookWriter")
+	}
+
 	if !ww.headerWritten {
 		err := ww.WriteHeader(s)
 		if err != nil {
@@ -345,7 +360,7 @@ type SheetWriter struct {
 // Write the given rows to this SheetWriter
 func (sw *SheetWriter) WriteRows(rows []Row) error {
 	if sw.closed {
-		panic("SheetWriter already closed")
+		panic("Can not write to closed SheetWriter")
 	}
 
 	var err error
@@ -419,7 +434,7 @@ func (sw *SheetWriter) Close() error {
 // Writes the header of a sheet
 func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 	if sw.closed {
-		panic("SheetWriter already closed")
+		panic("Can not write to closed SheetWriter")
 	}
 
 	sheet := struct {
