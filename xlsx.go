@@ -232,7 +232,7 @@ type WorkbookWriter struct {
 // NewWorkbookWriter creates a new WorkbookWriter, which SheetWriters will
 // operate on. It must be closed when all Sheets have been written.
 func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil, false}
+	return &WorkbookWriter{zip.NewWriter(w), nil, false, false}
 }
 
 // Write the header files of the workbook
