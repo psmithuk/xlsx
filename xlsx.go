@@ -418,6 +418,5 @@ func (sw *SheetWriter) WriteHeader(s *Sheet) error {
 		Cols: s.columns,
 	}
 
-	err := TemplateSheetStart.Execute(sw.f, sheet)
-	return err
+	return TemplateSheetStart.Execute(sw.f, sheet)
 }
