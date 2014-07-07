@@ -355,7 +355,10 @@ func (ww *WorkbookWriter) Close() error {
 	return ww.zipWriter.Close()
 }
 
-// Creates a new SheetWriter
+// NewSheetWriter creates a new SheetWriter in this workbook using the given sheet.
+// It returns a SheetWriter to which rows can be written.
+// All rows must be written to the SheetWriter before the next call to NewSheetWriter,
+// as this will automatically close the previous SheetWriter.
 func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	if !ww.headerWritten {
 		err := ww.WriteHeader(s)
