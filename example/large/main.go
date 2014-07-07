@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/sean-duffy/xlsx"
+	"github.com/psmithuk/xlsx"
 )
 
 func main() {

@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/sean-duffy/xlsx"
+	"time"
+
+	"github.com/psmithuk/xlsx"
 )
 
 func main() {
@@ -49,6 +51,6 @@ func main() {
 
 	err := sh.SaveToFile("test.xlsx")
 	if err != nil {
-		log.Print(err)
+		println(err)
 	}
 }
