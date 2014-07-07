@@ -131,13 +131,6 @@ func (s *Sheet) AppendRow(r Row) error {
 				s.sharedStrings = append(s.sharedStrings, cells[n].Value)
 			}
 			cells[n].Value = strconv.Itoa(i)
-		} else if cells[n].Type == CellTypeDatetime {
-			d, err := time.Parse(time.RFC3339, cells[n].Value)
-			if err == nil {
-				cells[n].Value = OADate(d)
-			}
-		} else if cells[n].Type == CellTypeInlineString {
-			cells[n].Value = html.EscapeString(cells[n].Value)
 		}
 	}
 
@@ -380,9 +373,20 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 			cell := struct {
 				CellIndex string
 				Value     string
+				Type      CellType
 			}{
 				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
 				Value:     c.Value,
+				Type:      c.Type,
+			}
+
+			if c.Type == CellTypeDatetime {
+				d, err := time.Parse(time.RFC3339, c.Value)
+				if err == nil {
+					cell.Value = OADate(d)
+				}
+			} else if c.Type == CellTypeInlineString {
+				cell.Value = html.EscapeString(c.Value)
 			}
 
 			switch c.Type {
