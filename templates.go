@@ -159,8 +159,8 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
       <sheetData>`
 
 const templateSheetEnd = `
- <dimension ref="{{.Start}}:{{.End}}"/>
  </sheetData>
+ <dimension ref="{{.Start}}:{{.End}}"/>
    </worksheet>`
 
 const templateCellNumber = `<c r="{{.CellIndex}}" t="n" s="1"><v>{{.Value}}</v></c>`
