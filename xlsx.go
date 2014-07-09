@@ -389,16 +389,20 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				cell.Value = html.EscapeString(c.Value)
 			}
 
+			var cellString string
+
 			switch c.Type {
 			case CellTypeString:
-				err = TemplateCellString.Execute(rb, cell)
+				cellString = `<c r="%s" t="s" s="1"><v>%s</v></c>`
 			case CellTypeInlineString:
-				err = TemplateCellInlineString.Execute(rb, cell)
+				cellString = `<c r="%s" t="inlineStr"><is><t>%s</t></is></c>`
 			case CellTypeNumber:
-				err = TemplateCellNumber.Execute(rb, cell)
+				cellString = `<c r="%s" t="n" s="1"><v>%s</v></c>`
 			case CellTypeDatetime:
-				err = TemplateCellDateTime.Execute(rb, cell)
+				cellString = `<c r="%s" s="2"><v>%s</v></c>`
 			}
+
+			io.WriteString(rb, fmt.Sprintf(cellString, cell.CellIndex, cell.Value))
 
 			if err != nil {
 				return err
