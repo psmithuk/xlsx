@@ -103,8 +103,8 @@ const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <numFmt numFmtId="165" formatCode="yyyy\-mm\-dd;@"/>
     </numFmts>
     <fonts count="2" x14ac:knownFonts="1">
-      <font><sz val="11"/><color theme="1"/><name val="Calibri"/><family val="2"/><scheme val="minor"/></font>
-      <font><sz val="11"/><color theme="1"/><name val="Arial Unicode MS"/></font>
+      <font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/><scheme val="minor"/></font>
+      <font><sz val="11"/><color rgb="FF000000"/><name val="Arial Unicode MS"/></font>
     </fonts>
     <fills count="2">
       <fill>
