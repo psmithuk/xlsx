@@ -137,9 +137,6 @@ const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     <dxfs count="0"/>
     <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
     <extLst>
-      <ext uri="{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
-        <x14:slicerStyles defaultSlicerStyle="SlicerStyleLight1"/>
-      </ext>
     </extLst>
   </styleSheet>`
 
