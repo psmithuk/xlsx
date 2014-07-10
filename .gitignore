@@ -1,6 +1,11 @@
 # Project specific binaries
 
 example/main
+example/large/large
+example/example1/example1
+
+# Test workbooks
+*.xlsx
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
@@ -27,3 +32,4 @@ _cgo_export.*
 .monitor
 _*
 *.sublime-workspace
+*.swp
