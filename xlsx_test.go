@@ -24,7 +24,8 @@ func TestCellIndex(t *testing.T) {
 	}
 
 	for _, c := range tests {
-		s := CellIndex(c.x, c.y)
+		cellX, cellY := CellIndex(c.x, c.y)
+		s := fmt.Sprintf("%s%d", cellX, cellY)
 		if s != c.expected {
 			t.Errorf("expected %s, got %s", c.expected, s)
 		}
