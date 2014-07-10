@@ -16,7 +16,6 @@ var (
 	TemplateStyles                *template.Template
 	TemplateStringLookups         *template.Template
 	TemplateSheetStart            *template.Template
-	TemplateSheetEnd              *template.Template
 	TemplateApp                   *template.Template
 	TemplateCore                  *template.Template
 )
@@ -43,7 +42,6 @@ func init() {
 	TemplateStyles = template.Must(template.New("templateStyles").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStyles, "")))
 	TemplateStringLookups = template.Must(template.New("templateStringLookups").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStringLookups, "")))
 	TemplateSheetStart = template.Must(template.New("templateSheetStart").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetStart, "")))
-	TemplateSheetEnd = template.Must(template.New("templateSheetEnd").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetEnd, "")))
 	TemplateApp = template.Must(template.New("templateApp").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateApp, "")))
 	TemplateCore = template.Must(template.New("templateCore").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCore, "")))
 }
@@ -149,11 +147,6 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
           {{end}}
         </cols>
       <sheetData>`
-
-const templateSheetEnd = `
- <dimension ref="{{.Start}}:{{.End}}"/>
- </sheetData>
-   </worksheet>`
 
 const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
