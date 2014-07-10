@@ -149,8 +149,8 @@ func (s *Sheet) SharedStrings() []string {
 
 // Given zero-based array indices output the Excel cell reference. For
 // example (0,0) => "A1"; (2,2) => "C3"; (26,45) => "AA46"
-func CellIndex(x, y uint64) string {
-	return fmt.Sprintf("%s%d", colName(x), y+1)
+func CellIndex(x, y uint64) (string, uint64) {
+	return colName(x), (y + 1)
 }
 
 // From a zero-based column number return the Excel column name.
@@ -161,7 +161,7 @@ func colName(n uint64) string {
 
 	for n > 0 {
 		n -= 1
-		s = fmt.Sprintf("%s%s", string(65+(n%26)), s)
+		s = string(65+(n%26)) + s
 		n /= 26
 	}
 
@@ -370,39 +370,31 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 		for j, c := range r.Cells {
 
-			cell := struct {
-				CellIndex string
-				Value     string
-				Type      CellType
-			}{
-				CellIndex: CellIndex(uint64(j), uint64(i)+sw.currentIndex),
-				Value:     c.Value,
-				Type:      c.Type,
-			}
+			cellX, cellY := CellIndex(uint64(j), uint64(i)+sw.currentIndex)
 
 			if c.Type == CellTypeDatetime {
 				d, err := time.Parse(time.RFC3339, c.Value)
 				if err == nil {
-					cell.Value = OADate(d)
+					c.Value = OADate(d)
 				}
 			} else if c.Type == CellTypeInlineString {
-				cell.Value = html.EscapeString(c.Value)
+				c.Value = html.EscapeString(c.Value)
 			}
 
 			var cellString string
 
 			switch c.Type {
 			case CellTypeString:
-				cellString = `<c r="%s" t="s" s="1"><v>%s</v></c>`
+				cellString = `<c r="%s%d" t="s" s="1"><v>%s</v></c>`
 			case CellTypeInlineString:
-				cellString = `<c r="%s" t="inlineStr"><is><t>%s</t></is></c>`
+				cellString = `<c r="%s%d" t="inlineStr"><is><t>%s</t></is></c>`
 			case CellTypeNumber:
-				cellString = `<c r="%s" t="n" s="1"><v>%s</v></c>`
+				cellString = `<c r="%s%d" t="n" s="1"><v>%s</v></c>`
 			case CellTypeDatetime:
-				cellString = `<c r="%s" s="2"><v>%s</v></c>`
+				cellString = `<c r="%s%d" s="2"><v>%s</v></c>`
 			}
 
-			io.WriteString(rb, fmt.Sprintf(cellString, cell.CellIndex, cell.Value))
+			io.WriteString(rb, fmt.Sprintf(cellString, cellX, cellY, c.Value))
 
 			if err != nil {
 				return err
@@ -429,15 +421,10 @@ func (sw *SheetWriter) Close() error {
 		panic("SheetWriter already closed")
 	}
 
-	sheet := struct {
-		Start string
-		End   string
-	}{
-		Start: "A1",
-		End:   CellIndex(sw.maxNCols-1, sw.currentIndex-1),
-	}
-
-	err := TemplateSheetEnd.Execute(sw.f, sheet)
+	cellEndX, cellEndY := CellIndex(sw.maxNCols-1, sw.currentIndex-1)
+	sheetEnd := fmt.Sprintf(`<dimension ref="A1:%s%d"/>`, cellEndX, cellEndY)
+	sheetEnd += `</sheetData></worksheet>`
+	_, err := io.WriteString(sw.f, sheetEnd)
 
 	sw.closed = true
 
