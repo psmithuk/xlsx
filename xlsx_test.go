@@ -24,7 +24,8 @@ func TestCellIndex(t *testing.T) {
 	}
 
 	for _, c := range tests {
-		s := CellIndex(c.x, c.y)
+		cellX, cellY := CellIndex(c.x, c.y)
+		s := fmt.Sprintf("%s%d", cellX, cellY)
 		if s != c.expected {
 			t.Errorf("expected %s, got %s", c.expected, s)
 		}
@@ -98,29 +99,6 @@ func TestTemplates(t *testing.T) {
 		t.Errorf("template TemplateStringLookups failed to Execute returning error %s", err.Error())
 	}
 
-	cell := struct {
-		CellIndex string
-		Value     string
-	}{
-		CellIndex: "A1",
-		Value:     "ABC",
-	}
-
-	err = TemplateCellString.Execute(&b, cell)
-	if err != nil {
-		t.Errorf("template TemplateCellString failed to Execute returning error %s", err.Error())
-	}
-
-	err = TemplateCellNumber.Execute(&b, cell)
-	if err != nil {
-		t.Errorf("template TemplateCellNumber failed to Execute returning error %s", err.Error())
-	}
-
-	err = TemplateCellDateTime.Execute(&b, cell)
-	if err != nil {
-		t.Errorf("template TemplateCellDateTime failed to Execute returning error %s", err.Error())
-	}
-
 	sheet := struct {
 		Cols  []Column
 		Rows  []string
@@ -142,10 +120,5 @@ func TestTemplates(t *testing.T) {
 		rb := &bytes.Buffer{}
 		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i), rb.String())
 		_, err = io.WriteString(&b, rowString)
-	}
-
-	err = TemplateSheetEnd.Execute(&b, sheet)
-	if err != nil {
-		t.Errorf("template TemplateSheetEnd failed to Execute returning error %s", err.Error())
 	}
 }

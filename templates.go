@@ -16,11 +16,6 @@ var (
 	TemplateStyles                *template.Template
 	TemplateStringLookups         *template.Template
 	TemplateSheetStart            *template.Template
-	TemplateSheetEnd              *template.Template
-	TemplateCellNumber            *template.Template
-	TemplateCellString            *template.Template
-	TemplateCellDateTime          *template.Template
-	TemplateCellInlineString      *template.Template
 	TemplateApp                   *template.Template
 	TemplateCore                  *template.Template
 )
@@ -47,11 +42,6 @@ func init() {
 	TemplateStyles = template.Must(template.New("templateStyles").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStyles, "")))
 	TemplateStringLookups = template.Must(template.New("templateStringLookups").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateStringLookups, "")))
 	TemplateSheetStart = template.Must(template.New("templateSheetStart").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetStart, "")))
-	TemplateSheetEnd = template.Must(template.New("templateSheetEnd").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateSheetEnd, "")))
-	TemplateCellNumber = template.Must(template.New("templateCellNumber").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellNumber, "")))
-	TemplateCellString = template.Must(template.New("templateCellString").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellString, "")))
-	TemplateCellDateTime = template.Must(template.New("templateCellDateTime").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellDateTime, "")))
-	TemplateCellInlineString = template.Must(template.New("templateCellInlineString").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCellInlineString, "")))
 	TemplateApp = template.Must(template.New("templateApp").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateApp, "")))
 	TemplateCore = template.Must(template.New("templateCore").Funcs(funcMap).Parse(re.ReplaceAllLiteralString(templateCore, "")))
 }
@@ -157,16 +147,6 @@ const templateSheetStart = `<?xml version="1.0" encoding="UTF-8" standalone="yes
           {{end}}
         </cols>
       <sheetData>`
-
-const templateSheetEnd = `
- </sheetData>
- <dimension ref="{{.Start}}:{{.End}}"/>
-   </worksheet>`
-
-const templateCellNumber = `<c r="{{.CellIndex}}" t="n" s="1"><v>{{.Value}}</v></c>`
-const templateCellString = `<c r="{{.CellIndex}}" t="s" s="1"><v>{{.Value}}</v></c>`
-const templateCellDateTime = `<c r="{{.CellIndex}}" s="2"><v>{{.Value}}</v></c>`
-const templateCellInlineString = `<c r="{{.CellIndex}}" t="inlineStr"><is><t>{{.Value}}</t></is></c>`
 
 const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
