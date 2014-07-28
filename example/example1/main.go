@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
-
 	"github.com/psmithuk/xlsx"
+	"log"
+	"time"
 )
 
 func main() {
