@@ -217,20 +217,6 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 	return err
 }
 
-// Handles the writing of an XLSX workbook
-type WorkbookWriter struct {
-	zipWriter     *zip.Writer
-	sheetWriter   *SheetWriter
-	headerWritten bool
-	closed        bool
-}
-
-// NewWorkbookWriter creates a new WorkbookWriter, which SheetWriters will
-// operate on. It must be closed when all Sheets have been written.
-func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil, false, false}
-}
-
 // Write the header files of the workbook
 func (ww *WorkbookWriter) WriteHeader() error {
 	if ww.headerWritten {
@@ -252,7 +238,7 @@ func (ww *WorkbookWriter) WriteHeader() error {
 	}
 
 	f, err = z.Create("docProps/core.xml")
-	err = TemplateCore.Execute(f, ww.DocumentInfo)
+	err = TemplateCore.Execute(f, ww.documentInfo)
 	if err != nil {
 		return err
 	}
@@ -295,14 +281,15 @@ type WorkbookWriter struct {
 	zipWriter     *zip.Writer
 	sheetWriter   *SheetWriter
 	headerWritten bool
+	closed        bool
 	sheetNames    []string
 	SharedStrings []string
-	DocumentInfo  *DocumentInfo
+	documentInfo  *DocumentInfo
 }
 
 // Creates a new WorkbookWriter
 func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil, false, []string{}, nil, nil}
+	return &WorkbookWriter{zip.NewWriter(w), nil, false, false, []string{}, nil, nil}
 }
 
 // Closes the WorkbookWriter
@@ -342,7 +329,7 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	f, err := ww.zipWriter.Create("xl/worksheets/" + fmt.Sprintf("sheet%s", strconv.Itoa(len(ww.sheetNames)+1)) + ".xml")
 	sw := &SheetWriter{f, err, 0, 0, false}
 
-	ww.DocumentInfo = &s.DocumentInfo
+	ww.documentInfo = &s.DocumentInfo
 
 	if ww.sheetWriter != nil {
 		err = ww.sheetWriter.Close()
@@ -353,8 +340,6 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 
 	ww.sheetWriter = sw
 	err = sw.WriteHeader(s)
-
-	ww.sheetNames = append(ww.sheetNames, s.Title)
 
 	ww.sheetNames = append(ww.sheetNames, s.Title)
 
