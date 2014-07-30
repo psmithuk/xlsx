@@ -134,8 +134,6 @@ const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     </cellStyles>
     <dxfs count="0"/>
     <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
-    <extLst>
-    </extLst>
   </styleSheet>`
 
 const templateStringLookups = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
