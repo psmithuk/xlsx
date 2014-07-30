@@ -298,6 +298,13 @@ func (ww *WorkbookWriter) Close() error {
 		panic("WorkbookWriter already closed")
 	}
 
+	if ww.sheetWriter != nil {
+		err := ww.sheetWriter.Close()
+		if err != nil {
+			return err
+		}
+	}
+
 	if !ww.headerWritten {
 		err := ww.WriteHeader()
 		if err != nil {
@@ -330,13 +337,6 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	sw := &SheetWriter{f, err, 0, 0, false}
 
 	ww.documentInfo = &s.DocumentInfo
-
-	if ww.sheetWriter != nil {
-		err = ww.sheetWriter.Close()
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	ww.sheetWriter = sw
 	err = sw.WriteHeader(s)
