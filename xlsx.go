@@ -212,6 +212,8 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
+	ww.SharedStrings = s.sharedStrings
+
 	err = ww.Close()
 
 	return err
@@ -267,11 +269,11 @@ func (ww *WorkbookWriter) WriteHeader() error {
 		return err
 	}
 
-	//f, err = z.Create("xl/sharedStrings.xml")
-	//err = TemplateStringLookups.Execute(f, s[0].SharedStrings())
-	//if err != nil {
-	//	return err
-	//}
+	f, err = z.Create("xl/sharedStrings.xml")
+	err = TemplateStringLookups.Execute(f, ww.SharedStrings)
+	if err != nil {
+		return err
+	}
 
 	return err
 }
