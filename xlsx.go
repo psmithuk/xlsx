@@ -41,7 +41,7 @@ type Column struct {
 	Width uint64
 }
 
-// XLSX Spreadsheet Document Properties
+// XLSX Workbook Document Properties
 type DocumentInfo struct {
 	CreatedBy  string
 	ModifiedBy string
@@ -212,31 +212,15 @@ func (s *Sheet) SaveToWriter(w io.Writer) error {
 		return err
 	}
 
+	ww.SharedStrings = s.sharedStrings
+
 	err = ww.Close()
 
 	return err
 }
 
-// Handles the writing of an XLSX workbook
-type WorkbookWriter struct {
-	zipWriter     *zip.Writer
-	sheetWriter   *SheetWriter
-	headerWritten bool
-	closed        bool
-}
-
-// NewWorkbookWriter creates a new WorkbookWriter, which SheetWriters will
-// operate on. It must be closed when all Sheets have been written.
-func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
-	return &WorkbookWriter{zip.NewWriter(w), nil, false, false}
-}
-
 // Write the header files of the workbook
-func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
-	if ww.closed {
-		panic("Can not write to closed WorkbookWriter")
-	}
-
+func (ww *WorkbookWriter) WriteHeader() error {
 	if ww.headerWritten {
 		panic("Workbook header already written")
 	}
@@ -244,19 +228,19 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	z := ww.zipWriter
 
 	f, err := z.Create("[Content_Types].xml")
-	err = TemplateContentTypes.Execute(f, nil)
+	err = TemplateContentTypes.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("docProps/app.xml")
-	err = TemplateApp.Execute(f, s)
+	err = TemplateApp.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("docProps/core.xml")
-	err = TemplateCore.Execute(f, s.DocumentInfo)
+	err = TemplateCore.Execute(f, ww.documentInfo)
 	if err != nil {
 		return err
 	}
@@ -268,13 +252,13 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("xl/workbook.xml")
-	err = TemplateWorkbook.Execute(f, s)
+	err = TemplateWorkbook.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
 
 	f, err = z.Create("xl/_rels/workbook.xml.rels")
-	err = TemplateWorkbookRelationships.Execute(f, nil)
+	err = TemplateWorkbookRelationships.Execute(f, ww.sheetNames)
 	if err != nil {
 		return err
 	}
@@ -286,12 +270,28 @@ func (ww *WorkbookWriter) WriteHeader(s *Sheet) error {
 	}
 
 	f, err = z.Create("xl/sharedStrings.xml")
-	err = TemplateStringLookups.Execute(f, s.SharedStrings())
+	err = TemplateStringLookups.Execute(f, ww.SharedStrings)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return err
+}
+
+// Handles the writing of an XLSX workbook
+type WorkbookWriter struct {
+	zipWriter     *zip.Writer
+	sheetWriter   *SheetWriter
+	headerWritten bool
+	closed        bool
+	sheetNames    []string
+	SharedStrings []string
+	documentInfo  *DocumentInfo
+}
+
+// Creates a new WorkbookWriter
+func NewWorkbookWriter(w io.Writer) *WorkbookWriter {
+	return &WorkbookWriter{zip.NewWriter(w), nil, false, false, []string{}, nil, nil}
 }
 
 // Closes the WorkbookWriter
@@ -302,6 +302,13 @@ func (ww *WorkbookWriter) Close() error {
 
 	if ww.sheetWriter != nil {
 		err := ww.sheetWriter.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	if !ww.headerWritten {
+		err := ww.WriteHeader()
 		if err != nil {
 			return err
 		}
@@ -321,25 +328,22 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 		panic("Can not write to closed WorkbookWriter")
 	}
 
-	if !ww.headerWritten {
-		err := ww.WriteHeader(s)
+	if ww.sheetWriter != nil {
+		err := ww.sheetWriter.Close()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	f, err := ww.zipWriter.Create("xl/worksheets/" + "sheet1" + ".xml")
+	f, err := ww.zipWriter.Create("xl/worksheets/" + fmt.Sprintf("sheet%s", strconv.Itoa(len(ww.sheetNames)+1)) + ".xml")
 	sw := &SheetWriter{f, err, 0, 0, false}
 
-	if ww.sheetWriter != nil {
-		err = ww.sheetWriter.Close()
-		if err != nil {
-			return nil, err
-		}
-	}
+	ww.documentInfo = &s.DocumentInfo
 
 	ww.sheetWriter = sw
 	err = sw.WriteHeader(s)
+
+	ww.sheetNames = append(ww.sheetNames, s.Title)
 
 	return sw, err
 }

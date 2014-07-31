@@ -48,10 +48,13 @@ func init() {
 
 const templateContentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-      <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
       <Default Extension="xml" ContentType="application/xml"/>
+      <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+	  <Default Extension="jpeg" ContentType="image/jpeg"/>
       <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-      <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+      {{ range $i, $_ := . }}
+      <Override PartName="/xl/worksheets/sheet{{plus $i 1}}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+      {{ end }}
       <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
       <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
       <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
@@ -73,16 +76,21 @@ const templateWorkbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?
           <workbookView xWindow="480" yWindow="60" windowWidth="18195" windowHeight="8505"/>
       </bookViews>
       <sheets>
-          <sheet name="{{.Title}}" sheetId="1" r:id="rId1"/>
+          {{ range $i, $e := . }}
+          <sheet name="{{$e}}" sheetId="{{plus $i 1 }}" r:id="rId{{plus $i 1}}"/>
+          {{ end }}
       </sheets>
       <calcPr calcId="145621"/>
   </workbook>`
 
 const templateWorkbookRelationships = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-      <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-      <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
-      <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      {{ range $i, $_ := . }}
+      <Relationship Id="rId{{plus $i 1}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet{{plus $i 1}}.xml"/>
+      {{ end }}
+      {{ $i := len . }}
+      <Relationship Id="rId{{plus $i 1}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      <Relationship Id="rId{{plus $i 2}}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
   </Relationships>`
 
 const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -126,8 +134,6 @@ const templateStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     </cellStyles>
     <dxfs count="0"/>
     <tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
-    <extLst>
-    </extLst>
   </styleSheet>`
 
 const templateStringLookups = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -159,13 +165,15 @@ const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <vt:lpstr>Worksheets</vt:lpstr>
       </vt:variant>
       <vt:variant>
-        <vt:i4>1</vt:i4>
+        <vt:i4>{{ len . }}</vt:i4>
       </vt:variant>
     </vt:vector>
   </HeadingPairs>
   <TitlesOfParts>
-    <vt:vector size="1" baseType="lpstr">
-      <vt:lpstr>{{.Title}}</vt:lpstr>
+    <vt:vector size="{{ len . }}" baseType="lpstr">
+      {{ range $i, $e := . }}
+      <vt:lpstr>{{$e}}</vt:lpstr>
+      {{ end }}
     </vt:vector>
   </TitlesOfParts>
   <LinksUpToDate>false</LinksUpToDate>
