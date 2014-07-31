@@ -58,6 +58,7 @@ func TestTemplates(t *testing.T) {
 	var b bytes.Buffer
 	var err error
 	var s Sheet
+	var sheetNames = []string{"SheetOne", "SheetTwo"}
 
 	err = TemplateContentTypes.Execute(&b, nil)
 	if err != nil {
@@ -69,7 +70,7 @@ func TestTemplates(t *testing.T) {
 		t.Errorf("template TemplateRelationships failed to Execute returning error %s", err.Error())
 	}
 
-	err = TemplateApp.Execute(&b, nil)
+	err = TemplateApp.Execute(&b, sheetNames)
 	if err != nil {
 		t.Errorf("template TemplateApp failed to Execute returning error %s", err.Error())
 	}
@@ -84,7 +85,7 @@ func TestTemplates(t *testing.T) {
 		t.Errorf("template TemplateWorkbook failed to Execute returning error %s", err.Error())
 	}
 
-	err = TemplateWorkbookRelationships.Execute(&b, nil)
+	err = TemplateWorkbookRelationships.Execute(&b, sheetNames)
 	if err != nil {
 		t.Errorf("template TemplateWorkbookRelationships failed to Execute returning error %s", err.Error())
 	}
