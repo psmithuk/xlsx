@@ -170,7 +170,7 @@ const templateApp = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
     </vt:vector>
   </HeadingPairs>
   <TitlesOfParts>
-    <vt:vector size="1" baseType="lpstr">
+    <vt:vector size="{{ len . }}" baseType="lpstr">
       {{ range $i, $e := . }}
       <vt:lpstr>{{$e}}</vt:lpstr>
       {{ end }}
