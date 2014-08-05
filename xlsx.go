@@ -439,9 +439,12 @@ func (sw *SheetWriter) Close() error {
 
 	cellEndX, cellEndY := CellIndex(sw.maxNCols-1, sw.currentIndex-1)
 	sheetEnd := fmt.Sprintf(`<dimension ref="A1:%s%d"/></sheetData>`, cellEndX, cellEndY)
-	sheetEnd += fmt.Sprintf(`<mergeCells count="%v">`, sw.mergeCellsCount)
-	sheetEnd += sw.mergeCells
-	sheetEnd += `</mergeCells></worksheet>`
+	if sw.mergeCellsCount > 0 {
+		sheetEnd += fmt.Sprintf(`<mergeCells count="%v">`, sw.mergeCellsCount)
+		sheetEnd += sw.mergeCells
+		sheetEnd += `</mergeCells></worksheet>`
+	}
+	sheetEnd += `</worksheet>`
 	_, err := io.WriteString(sw.f, sheetEnd)
 
 	sw.closed = true
