@@ -26,8 +26,9 @@ const (
 
 // XLSX Spreadsheet Cell
 type Cell struct {
-	Type  CellType
-	Value string
+	Type    CellType
+	Value   string
+	Colspan uint64
 }
 
 // XLSX Spreadsheet Row
@@ -336,7 +337,7 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 	}
 
 	f, err := ww.zipWriter.Create("xl/worksheets/" + fmt.Sprintf("sheet%s", strconv.Itoa(len(ww.sheetNames)+1)) + ".xml")
-	sw := &SheetWriter{f, err, 0, 0, false}
+	sw := &SheetWriter{f, err, 0, 0, false, "", 0}
 
 	ww.documentInfo = &s.DocumentInfo
 
@@ -350,11 +351,13 @@ func (ww *WorkbookWriter) NewSheetWriter(s *Sheet) (*SheetWriter, error) {
 
 // Handles the writing of a sheet
 type SheetWriter struct {
-	f            io.Writer
-	err          error
-	currentIndex uint64
-	maxNCols     uint64
-	closed       bool
+	f               io.Writer
+	err             error
+	currentIndex    uint64
+	maxNCols        uint64
+	closed          bool
+	mergeCells      string
+	mergeCellsCount int
 }
 
 // Write the given rows to this SheetWriter
@@ -398,6 +401,14 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				cellString = `<c r="%s%d" s="2"><v>%s</v></c>`
 			}
 
+			if c.Colspan < 0 {
+				panic(fmt.Sprintf("%v is not a valid colspan", c.Colspan))
+			} else if c.Colspan > 1 {
+				mergeCellX, _ := CellIndex(uint64(j)+c.Colspan-1, uint64(i)+sw.currentIndex)
+				sw.mergeCells += fmt.Sprintf(`<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX)
+				sw.mergeCellsCount += 1
+			}
+
 			io.WriteString(rb, fmt.Sprintf(cellString, cellX, cellY, c.Value))
 
 			if err != nil {
@@ -426,8 +437,13 @@ func (sw *SheetWriter) Close() error {
 	}
 
 	cellEndX, cellEndY := CellIndex(sw.maxNCols-1, sw.currentIndex-1)
-	sheetEnd := fmt.Sprintf(`<dimension ref="A1:%s%d"/>`, cellEndX, cellEndY)
-	sheetEnd += `</sheetData></worksheet>`
+	sheetEnd := fmt.Sprintf(`<dimension ref="A1:%s%d"/></sheetData>`, cellEndX, cellEndY)
+	if sw.mergeCellsCount > 0 {
+		sheetEnd += fmt.Sprintf(`<mergeCells count="%v">`, sw.mergeCellsCount)
+		sheetEnd += sw.mergeCells
+		sheetEnd += `</mergeCells>`
+	}
+	sheetEnd += `</worksheet>`
 	_, err := io.WriteString(sw.f, sheetEnd)
 
 	sw.closed = true
