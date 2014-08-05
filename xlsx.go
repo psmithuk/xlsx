@@ -403,8 +403,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 
 			if c.Colspan < 0 {
 				panic(fmt.Sprintf("%v is not a valid colspan", c.Colspan))
-			} else if c.Colspan > 0 {
-
+			} else if c.Colspan > 1 {
 				mergeCellX, _ := CellIndex(uint64(j)+c.Colspan-1, uint64(i)+sw.currentIndex)
 				sw.mergeCells += fmt.Sprintf(`<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX)
 				sw.mergeCellsCount += 1
