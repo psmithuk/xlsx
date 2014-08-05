@@ -441,7 +441,7 @@ func (sw *SheetWriter) Close() error {
 	if sw.mergeCellsCount > 0 {
 		sheetEnd += fmt.Sprintf(`<mergeCells count="%v">`, sw.mergeCellsCount)
 		sheetEnd += sw.mergeCells
-		sheetEnd += `</mergeCells></worksheet>`
+		sheetEnd += `</mergeCells>`
 	}
 	sheetEnd += `</worksheet>`
 	_, err := io.WriteString(sw.f, sheetEnd)
