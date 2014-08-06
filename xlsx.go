@@ -5,7 +5,6 @@ package xlsx
 import (
 	"archive/zip"
 	"bufio"
-	"bytes"
 	"fmt"
 	"html"
 	"io"
@@ -369,7 +368,10 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 	var err error
 
 	for i, r := range rows {
-		rb := &bytes.Buffer{}
+		_, err = fmt.Fprintf(sw.f, `<row r="%d">`, uint64(i)+sw.currentIndex+1)
+		if err != nil {
+			return err
+		}
 
 		if sw.maxNCols < uint64(len(r.Cells)) {
 			sw.maxNCols = uint64(len(r.Cells))
@@ -405,19 +407,20 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				panic(fmt.Sprintf("%v is not a valid colspan", c.Colspan))
 			} else if c.Colspan > 1 {
 				mergeCellX, _ := CellIndex(uint64(j)+c.Colspan-1, uint64(i)+sw.currentIndex)
-				sw.mergeCells += fmt.Sprintf(`<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX)
+				_, err = fmt.Fprintf(sw.f, `<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX)
+				if err != nil {
+					return err
+				}
 				sw.mergeCellsCount += 1
 			}
 
-			_, err = io.WriteString(rb, fmt.Sprintf(cellString, cellX, cellY, c.Value))
+			_, err = fmt.Fprintf(sw.f, cellString, cellX, cellY, c.Value)
 			if err != nil {
 				return err
 			}
 		}
 
-		rowString := fmt.Sprintf(`<row r="%d">%s</row>`, uint64(i)+sw.currentIndex+1, rb.String())
-
-		_, err = io.WriteString(sw.f, rowString)
+		_, err = fmt.Fprint(sw.f, `</row>`)
 		if err != nil {
 			return err
 		}
