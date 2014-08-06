@@ -409,8 +409,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				sw.mergeCellsCount += 1
 			}
 
-			io.WriteString(rb, fmt.Sprintf(cellString, cellX, cellY, c.Value))
-
+			_, err = io.WriteString(rb, fmt.Sprintf(cellString, cellX, cellY, c.Value))
 			if err != nil {
 				return err
 			}
