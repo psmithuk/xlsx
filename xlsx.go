@@ -385,6 +385,8 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				d, err := time.Parse(time.RFC3339, c.Value)
 				if err == nil {
 					c.Value = OADate(d)
+				} else {
+					return err
 				}
 			} else if c.Type == CellTypeInlineString {
 				c.Value = html.EscapeString(c.Value)
