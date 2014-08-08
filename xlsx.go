@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -355,7 +356,7 @@ type SheetWriter struct {
 	currentIndex    uint64
 	maxNCols        uint64
 	closed          bool
-	mergeCells      string
+	mergeCells      []string
 	mergeCellsCount int
 }
 
@@ -409,7 +410,7 @@ func (sw *SheetWriter) WriteRows(rows []Row) error {
 				panic(fmt.Sprintf("%v is not a valid colspan", c.Colspan))
 			} else if c.Colspan > 1 {
 				mergeCellX, _ := CellIndex(uint64(j)+c.Colspan-1, uint64(i)+sw.currentIndex)
-				_, err = fmt.Fprintf(sw.f, `<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX)
+				sw.mergeCells = append(sw.mergeCells, fmt.Sprintf(`<mergeCell ref="%[1]s%[2]d:%[3]s%[2]d"/>`, cellX, cellY, mergeCellX))
 				if err != nil {
 					return err
 				}
@@ -444,7 +445,7 @@ func (sw *SheetWriter) Close() error {
 	sheetEnd := fmt.Sprintf(`<dimension ref="A1:%s%d"/></sheetData>`, cellEndX, cellEndY)
 	if sw.mergeCellsCount > 0 {
 		sheetEnd += fmt.Sprintf(`<mergeCells count="%v">`, sw.mergeCellsCount)
-		sheetEnd += sw.mergeCells
+		sheetEnd += strings.Join(sw.mergeCells, "")
 		sheetEnd += `</mergeCells>`
 	}
 	sheetEnd += `</worksheet>`
